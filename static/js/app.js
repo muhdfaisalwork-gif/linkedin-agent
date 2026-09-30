@@ -788,6 +788,18 @@ async function generatePlan() {
 }
 
 // 8. SETTINGS
+function checkCustomModelVisibility() {
+    const modelSelect = document.getElementById('setting-model');
+    const customContainer = document.getElementById('custom-model-container');
+    if (modelSelect && customContainer) {
+        if (modelSelect.value === 'custom') {
+            customContainer.classList.remove('hidden');
+        } else {
+            customContainer.classList.add('hidden');
+        }
+    }
+}
+
 async function loadSettings() {
     try {
         const res = await fetch('/api/settings');
@@ -795,18 +807,19 @@ async function loadSettings() {
 
         // Model selector
         const modelSelect = document.getElementById('setting-model');
-        if (modelSelect && data.available_free_models) {
-            const existingVals = Array.from(modelSelect.options).map(o => o.value);
-            data.available_free_models.forEach(m => {
-                if (!existingVals.includes(m)) {
-                    const opt = document.createElement('option');
-                    opt.value = m;
-                    opt.innerText = m;
-                    modelSelect.appendChild(opt);
-                }
-            });
-            if (data.openrouter_model) {
-                modelSelect.value = data.openrouter_model;
+        const customContainer = document.getElementById('custom-model-container');
+        const customInput = document.getElementById('setting-custom-model');
+
+        if (modelSelect && data.openrouter_model) {
+            const cur = data.openrouter_model;
+            const options = Array.from(modelSelect.querySelectorAll('option')).map(o => o.value);
+            if (options.includes(cur)) {
+                modelSelect.value = cur;
+                if (customContainer) customContainer.classList.add('hidden');
+            } else {
+                modelSelect.value = 'custom';
+                if (customContainer) customContainer.classList.remove('hidden');
+                if (customInput) customInput.value = cur;
             }
         }
 
@@ -839,7 +852,12 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-    const model = document.getElementById('setting-model').value;
+    let model = document.getElementById('setting-model').value;
+    if (model === 'custom') {
+        const customVal = document.getElementById('setting-custom-model')?.value?.trim();
+        if (customVal) model = customVal;
+    }
+
     const mode = document.getElementById('setting-mode').value;
     const apiKey = document.getElementById('setting-api-key')?.value?.trim();
 
