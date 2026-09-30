@@ -28,12 +28,25 @@ class LinkedInBrowserAgent:
             return False
 
     def is_authenticated(self) -> bool:
-        """Checks if saved session cookies exist in user data directory."""
+        """
+        Checks if real authenticated session cookie (li_at) exists in user data directory.
+        Only returns True if the user has actually logged in (not just loaded the login page).
+        """
+        auth_file = os.path.join(self.user_data_dir, ".authenticated")
+        if os.path.exists(auth_file):
+            return True
+
         net_cookies = os.path.join(self.user_data_dir, "Default", "Network", "Cookies")
         root_cookies = os.path.join(self.user_data_dir, "Default", "Cookies")
         for path in [net_cookies, root_cookies]:
             if os.path.exists(path) and os.path.getsize(path) > 1024:
-                return True
+                try:
+                    with open(path, "rb") as f:
+                        content = f.read()
+                        if b"li_at" in content:
+                            return True
+                except Exception:
+                    pass
         return False
 
     def _run_in_worker_thread(self, fn, *args, timeout: int = 60, **kwargs) -> Any:
@@ -48,16 +61,21 @@ class LinkedInBrowserAgent:
     def _launch_context(self, playwright_instance, headless: bool = False, viewport: Optional[Dict[str, int]] = None):
         """
         Launches persistent context with intelligent channel fallback:
-        Tries system Google Chrome -> Microsoft Edge -> standalone Playwright Chromium.
+        Tries standalone Playwright Chromium -> system Google Chrome -> Microsoft Edge.
+        Standalone Chromium guarantees a foreground pop-up window independent of background processes.
         """
-        channels = ["chrome", "msedge", None]
+        channels = [None, "chrome", "msedge"]
         errors = []
         for ch in channels:
             try:
                 kwargs = {
                     "user_data_dir": self.user_data_dir,
                     "headless": headless,
-                    "args": ["--disable-blink-features=AutomationControlled"]
+                    "args": [
+                        "--disable-blink-features=AutomationControlled",
+                        "--no-first-run",
+                        "--no-default-browser-check"
+                    ]
                 }
                 if ch:
                     kwargs["channel"] = ch
@@ -83,6 +101,11 @@ class LinkedInBrowserAgent:
             with sync_playwright() as p:
                 context = self._launch_context(p, headless=False, viewport={"width": 1280, "height": 850})
                 page = context.pages[0] if context.pages else context.new_page()
+                try:
+                    page.bring_to_front()
+                except Exception:
+                    pass
+
                 try:
                     page.goto("https://www.linkedin.com/login", wait_until="domcontentloaded", timeout=45000)
                 except Exception:
@@ -112,7 +135,13 @@ class LinkedInBrowserAgent:
                 except Exception:
                     pass
 
-                if logged_in or self.is_authenticated():
+                if logged_in:
+                    # Write .authenticated stamp
+                    try:
+                        with open(os.path.join(self.user_data_dir, ".authenticated"), "w") as f:
+                            f.write(f"authenticated_at={time.time()}\n")
+                    except Exception:
+                        pass
                     return {"status": "success", "message": "LinkedIn connected successfully! Your session is saved."}
                 else:
                     return {"status": "cancelled", "message": "Browser was closed before LinkedIn login finished. Please try again."}
