@@ -661,9 +661,12 @@ Click "Generate New 7-Day Plan" to build a customized weekly calendar balancing 
                     </div>
 
                     <div class="pt-3 border-t border-dark-700 space-y-3">
-                        <h4 class="text-xs font-bold uppercase text-slate-400">Direct Browser Connection</h4>
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold uppercase text-slate-400">Direct Browser Connection</h4>
+                            <span id="browser-auth-status" class="text-[11px] font-mono text-slate-400">Checking...</span>
+                        </div>
                         <p class="text-xs text-slate-400">Opens a headed browser window so you can log into LinkedIn once. Cookies are saved safely in your local profile.</p>
-                        <button onclick="connectBrowser()" class="py-2.5 px-4 bg-dark-700 hover:bg-dark-600 border border-dark-600 rounded-xl text-xs font-semibold text-slate-200 transition flex items-center gap-2">
+                        <button id="btn-connect-browser" onclick="connectBrowser()" class="py-2.5 px-4 bg-dark-700 hover:bg-dark-600 border border-dark-600 rounded-xl text-xs font-semibold text-slate-200 transition flex items-center gap-2">
                             <i data-lucide="globe" class="w-4 h-4 text-blue-400"></i> Connect LinkedIn Browser Session
                         </button>
                     </div>

@@ -29,17 +29,46 @@ class LinkedInBrowserAgent:
 
     def is_authenticated(self) -> bool:
         """Checks if saved session cookies exist in user data directory."""
-        cookie_file = os.path.join(self.user_data_dir, "Default", "Network", "Cookies")
-        return os.path.exists(cookie_file) or len(os.listdir(self.user_data_dir)) > 2
+        net_cookies = os.path.join(self.user_data_dir, "Default", "Network", "Cookies")
+        root_cookies = os.path.join(self.user_data_dir, "Default", "Cookies")
+        for path in [net_cookies, root_cookies]:
+            if os.path.exists(path) and os.path.getsize(path) > 1024:
+                return True
+        return False
 
-    def _run_in_worker_thread(self, fn, *args, **kwargs) -> Any:
+    def _run_in_worker_thread(self, fn, *args, timeout: int = 60, **kwargs) -> Any:
         """Runs synchronous Playwright operations in an isolated worker thread to avoid asyncio event loop conflicts."""
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(fn, *args, **kwargs)
             try:
-                return future.result(timeout=60)
+                return future.result(timeout=timeout)
             except concurrent.futures.TimeoutError:
-                return {"status": "error", "message": "Browser operation timed out after 60 seconds."}
+                return {"status": "error", "message": f"Browser operation timed out after {timeout} seconds."}
+
+    def _launch_context(self, playwright_instance, headless: bool = False, viewport: Optional[Dict[str, int]] = None):
+        """
+        Launches persistent context with intelligent channel fallback:
+        Tries system Google Chrome -> Microsoft Edge -> standalone Playwright Chromium.
+        """
+        channels = ["chrome", "msedge", None]
+        errors = []
+        for ch in channels:
+            try:
+                kwargs = {
+                    "user_data_dir": self.user_data_dir,
+                    "headless": headless,
+                    "args": ["--disable-blink-features=AutomationControlled"]
+                }
+                if ch:
+                    kwargs["channel"] = ch
+                if viewport:
+                    kwargs["viewport"] = viewport
+                return playwright_instance.chromium.launch_persistent_context(**kwargs)
+            except Exception as e:
+                errors.append(f"{ch or 'default'}: {str(e)}")
+                continue
+
+        raise RuntimeError(f"Could not launch browser context. Attempted channels: {errors}")
 
     def launch_interactive_login(self) -> Dict[str, Any]:
         """Opens a headed browser window so the user can log in to LinkedIn once safely."""
@@ -52,20 +81,40 @@ class LinkedInBrowserAgent:
         def _action():
             from playwright.sync_api import sync_playwright
             with sync_playwright() as p:
-                context = p.chromium.launch_persistent_context(
-                    user_data_dir=self.user_data_dir,
-                    headless=False,
-                    viewport={"width": 1280, "height": 800}
-                )
-                page = context.new_page()
+                context = self._launch_context(p, headless=False, viewport={"width": 1280, "height": 850})
+                page = context.pages[0] if context.pages else context.new_page()
                 page.goto("https://www.linkedin.com/login")
-                # Wait up to 45 seconds for user to log in
-                page.wait_for_timeout(45000)
-                context.close()
-                return {"status": "success", "message": "Browser session saved successfully."}
+
+                # Poll up to 180 seconds for user to complete login
+                # Detects if user reaches feed, profile, or closes the window
+                logged_in = False
+                for _ in range(180):
+                    try:
+                        time.sleep(1)
+                        if page.is_closed():
+                            break
+                        cur_url = page.url.lower()
+                        # If reached feed or profile page, login was successful
+                        if any(k in cur_url for k in ["/feed", "/in/", "/mynetwork", "/messaging"]):
+                            logged_in = True
+                            # Wait 2 seconds for session cookies to be written to storage
+                            time.sleep(2)
+                            break
+                    except Exception:
+                        break
+
+                try:
+                    context.close()
+                except Exception:
+                    pass
+
+                if logged_in or self.is_authenticated():
+                    return {"status": "success", "message": "LinkedIn connected successfully! Your session is saved."}
+                else:
+                    return {"status": "cancelled", "message": "Browser was closed before LinkedIn login finished. Please try again."}
 
         try:
-            return self._run_in_worker_thread(_action)
+            return self._run_in_worker_thread(_action, timeout=190)
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
@@ -77,11 +126,8 @@ class LinkedInBrowserAgent:
         def _action():
             from playwright.sync_api import sync_playwright
             with sync_playwright() as p:
-                context = p.chromium.launch_persistent_context(
-                    user_data_dir=self.user_data_dir,
-                    headless=self.headless
-                )
-                page = context.new_page()
+                context = self._launch_context(p, headless=self.headless)
+                page = context.pages[0] if context.pages else context.new_page()
                 page.goto("https://www.linkedin.com/feed/")
                 page.wait_for_load_state("domcontentloaded")
 
@@ -130,11 +176,8 @@ class LinkedInBrowserAgent:
         def _action():
             from playwright.sync_api import sync_playwright
             with sync_playwright() as p:
-                context = p.chromium.launch_persistent_context(
-                    user_data_dir=self.user_data_dir,
-                    headless=self.headless
-                )
-                page = context.new_page()
+                context = self._launch_context(p, headless=self.headless)
+                page = context.pages[0] if context.pages else context.new_page()
                 page.goto("https://www.linkedin.com/in/me/")
                 page.wait_for_load_state("domcontentloaded")
 

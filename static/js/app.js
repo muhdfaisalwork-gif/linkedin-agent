@@ -846,6 +846,18 @@ async function loadSettings() {
                 apiKeyStatus.className = 'text-[11px] font-mono text-amber-400';
             }
         }
+
+        // Browser Authentication Status
+        const browserStatus = document.getElementById('browser-auth-status');
+        if (browserStatus) {
+            if (data.browser_authenticated) {
+                browserStatus.innerText = '✓ Connected (Session Saved)';
+                browserStatus.className = 'text-[11px] font-mono text-emerald-400';
+            } else {
+                browserStatus.innerText = '⚠️ Not Connected';
+                browserStatus.className = 'text-[11px] font-mono text-amber-400';
+            }
+        }
     } catch (e) {
         console.error('Error loading settings:', e);
     }
@@ -885,6 +897,33 @@ async function saveSettings() {
 }
 
 async function connectBrowser() {
-    alert('Opening browser session. Please log in to LinkedIn if prompted. Your session will be stored locally.');
-    await fetch('/api/settings/connect-browser', { method: 'POST' });
+    const btn = document.getElementById('btn-connect-browser');
+    const originalHtml = btn ? btn.innerHTML : `<i data-lucide="globe" class="w-4 h-4 text-blue-400"></i> Connect LinkedIn Browser Session`;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-amber-400"></i> Browser Open — Log into LinkedIn in the opened window...`;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+        const res = await fetch('/api/settings/connect-browser', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            alert('🎉 ' + data.message);
+        } else if (data.status === 'cancelled') {
+            alert('ℹ️ ' + data.message);
+        } else {
+            alert('⚠️ ' + (data.message || 'Error launching browser session'));
+        }
+    } catch (e) {
+        alert('Network/Server error while connecting browser: ' + e.message);
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+        await loadSettings();
+    }
 }
