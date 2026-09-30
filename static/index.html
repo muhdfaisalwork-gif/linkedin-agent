@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusAgent - Autonomous LinkedIn AI Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0a0f1d',
+                            800: '#111827',
+                            700: '#1f2937',
+                            600: '#374151'
+                        },
+                        brand: {
+                            500: '#0a66c2', // LinkedIn blue
+                            600: '#004182',
+                            400: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-dark-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col custom-scrollbar">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-dark-700 bg-dark-800/80 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight flex items-center gap-2">
+                    NexusAgent <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-mono font-medium border border-blue-500/30">STUDIO 2026</span>
+                </h1>
+                <p class="text-xs text-slate-400">Autonomous LinkedIn Engine with Cognitive Brain</p>
+            </div>
+        </div>
+
+        <!-- Global Status Pill & Backend -->
+        <div class="flex items-center space-x-4">
+            <div class="hidden sm:flex items-center space-x-2 text-xs bg-dark-700/80 px-3 py-1.5 rounded-lg border border-dark-600">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-slate-300">Model: <strong id="active-model-badge" class="text-emerald-300 font-mono">openrouter/free</strong></span>
+            </div>
+            <div class="hidden md:flex items-center space-x-2 text-xs bg-dark-700/80 px-3 py-1.5 rounded-lg border border-dark-600">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-400"></i>
+                <span class="text-slate-300">82-Rule Humanizer: <strong class="text-blue-300">ACTIVE</strong></span>
+            </div>
+            <button onclick="switchTab('settings')" class="p-2 rounded-lg bg-dark-700 hover:bg-dark-600 text-slate-300 transition">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace with Sidebar Tabs -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 border-r border-dark-700 bg-dark-800/40 p-4 flex flex-col justify-between shrink-0">
+            <nav class="space-y-1.5">
+                <button onclick="switchTab('analytics')" id="tab-btn-analytics" class="sidebar-btn active flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-200 bg-dark-700/70 border border-dark-600">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i> Analytics & Reach
+                </button>
+                <button onclick="switchTab('studio')" id="tab-btn-studio" class="sidebar-btn flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-dark-700/50">
+                    <i data-lucide="pen-tool" class="w-4 h-4 text-purple-400"></i> Content Studio
+                </button>
+                <button onclick="switchTab('brain')" id="tab-btn-brain" class="sidebar-btn flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-dark-700/50">
+                    <i data-lucide="brain" class="w-4 h-4 text-emerald-400"></i> Cognitive Brain
+                </button>
+                <button onclick="switchTab('profile')" id="tab-btn-profile" class="sidebar-btn flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-dark-700/50">
+                    <i data-lucide="user-check" class="w-4 h-4 text-amber-400"></i> Profile Optimizer
+                </button>
+                <button onclick="switchTab('comments')" id="tab-btn-comments" class="sidebar-btn flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-dark-700/50">
+                    <i data-lucide="message-square" class="w-4 h-4 text-cyan-400"></i> Comment Sweeper
+                </button>
+                <button onclick="switchTab('inbox')" id="tab-btn-inbox" class="sidebar-btn flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-dark-700/50">
+                    <i data-lucide="mail" class="w-4 h-4 text-rose-400"></i> Inbox & DMs
+                </button>
+                <button onclick="switchTab('planner')" id="tab-btn-planner" class="sidebar-btn flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-dark-700/50">
+                    <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> 7-Day Plan
+                </button>
+            </nav>
+
+            <!-- Brain Status Card -->
+            <div class="bg-gradient-to-br from-dark-800 to-dark-700/60 p-3.5 rounded-2xl border border-dark-600/60">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Brain Evolution</span>
+                    <span class="text-xs text-emerald-400 font-mono">v1.2 active</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Brain contains <strong id="sidebar-receipts-count" class="text-emerald-400">7</strong> verified receipts (Sultrix, Shadow Stream, Shadow Voice, CRM).
+                </p>
+                <button onclick="switchTab('brain')" class="mt-3 text-xs w-full py-1.5 bg-dark-600 hover:bg-dark-500 rounded-lg text-slate-200 font-medium transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5 text-emerald-400"></i> Inspect Memory
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-dark-900/60">
+
+            <!-- TAB 1: ANALYTICS & REACH -->
+            <div id="tab-analytics" class="tab-pane space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Performance & Reach Analytics</h2>
+                        <p class="text-sm text-slate-400">Real-time performance telemetry and evolving formula multipliers</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="simulateMetrics()" class="text-xs bg-dark-700 hover:bg-dark-600 border border-dark-600 text-slate-300 px-3.5 py-2 rounded-xl transition flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i> Simulate Engagement Feedback
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase">Estimated Impressions</span>
+                            <i data-lucide="eye" class="w-4 h-4 text-blue-400"></i>
+                        </div>
+                        <h3 id="stat-impressions" class="text-2xl font-bold mt-2">18,450</h3>
+                        <p class="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                            <i data-lucide="arrow-up-right" class="w-3 h-3"></i> +34% with Number-First Hooks
+                        </p>
+                    </div>
+
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase">Total Reactions</span>
+                            <i data-lucide="thumbs-up" class="w-4 h-4 text-emerald-400"></i>
+                        </div>
+                        <h3 id="stat-likes" class="text-2xl font-bold mt-2">642</h3>
+                        <p class="text-xs text-slate-400 mt-1">High conversion on F7 & F17</p>
+                    </div>
+
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase">Deep Comments</span>
+                            <i data-lucide="message-circle" class="w-4 h-4 text-purple-400"></i>
+                        </div>
+                        <h3 id="stat-comments" class="text-2xl font-bold mt-2">158</h3>
+                        <p class="text-xs text-purple-400 mt-1">100% 2-level resolved</p>
+                    </div>
+
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase">AI Slop Penalty</span>
+                            <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mt-2 text-emerald-400">0% Flagged</h3>
+                        <p class="text-xs text-slate-400 mt-1">Strict 82-Rule Gate Pass</p>
+                    </div>
+                </div>
+
+                <!-- Leaderboard & Analytics Chart -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-dark-800 border border-dark-700 p-5 rounded-2xl">
+                        <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                            <i data-lucide="line-chart" class="w-4 h-4 text-blue-400"></i> Dwell Time & Reach Trajectory
+                        </h3>
+                        <canvas id="performanceChart" height="140"></canvas>
+                    </div>
+
+                    <!-- Evolving Heuristics Leaderboard -->
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-base mb-3 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-amber-400"></i> Winning Formulas</span>
+                                <span class="text-xs text-slate-400 font-normal">Audience Evolved</span>
+                            </h3>
+                            <div id="heuristics-list" class="space-y-2.5">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <button onclick="switchTab('studio')" class="mt-4 w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-semibold transition">
+                            Draft with Top Formula
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CONTENT STUDIO -->
+            <div id="tab-studio" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Content Studio</h2>
+                        <p class="text-sm text-slate-400">Generate viral-ready LinkedIn posts with text + image using 2026 hook formulas</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left: Generation Controls -->
+                    <div class="lg:col-span-6 space-y-4">
+                        <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Post Topic or Core Insight</label>
+                                <textarea id="post-topic" rows="3" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-3 text-sm focus:border-blue-500 focus:outline-none placeholder-slate-500" placeholder="e.g. Why we built Sultrix Trade OS with custom order routing instead of off-the-shelf APIs"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">2026 Hook Formula</label>
+                                    <select id="post-hook" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
+                                        <option value="F7">F7: Odd-Precision Money Ledger (+34% Reach, Number-First)</option>
+                                        <option value="F17">F17: Controlled A/B Anecdote (Structural Comparison)</option>
+                                        <option value="F10">F10: Contrarian + Historical Receipts (3,083 Eng)</option>
+                                        <option value="F1">F1: Platform Risk Anaphora (4,240 Eng)</option>
+                                        <option value="F2">F2: R.I.P. Obituary (3,822 Eng)</option>
+                                        <option value="F3">F3: Year-over-Year Pivot (3.74x Reach)</option>
+                                        <option value="F4">F4: Time-Anchor Confession (Specific Scars)</option>
+                                        <option value="F5">F5: Self-Proving Meta (Tests in Public)</option>
+                                        <option value="F6">F6: Comment-Gate Lead Magnet (Real Deliverable)</option>
+                                        <option value="F8">F8: Paid-vs-Free Reversal (19.64x Multiplier)</option>
+                                        <option value="F9">F9: Curiosity-Gap Teaser (Behind the Scenes)</option>
+                                        <option value="F11">F11: Emotional Cold-Open (High Reach)</option>
+                                        <option value="F12">F12: Permission Slip (Anti-Platitude)</option>
+                                        <option value="F13">F13: Bait-and-Switch Reversal (Process Upgrade)</option>
+                                        <option value="F14">F14: Named Gratitude / Tribute (Team/Mentors)</option>
+                                        <option value="F15">F15: Explain-to-Kids (Demystifying Jargon)</option>
+                                        <option value="F16">F16: Status-Strip Humility (Senior Builder)</option>
+                                        <option value="F18">F18: False-Binary Dissolve (Structural)</option>
+                                        <option value="F19">F19: Anecdote-Meets-Evidence Bridge (Data Stack)</option>
+                                        <option value="F20">F20: Diverging-Curves Close (Two Trajectories)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Founder Angle</label>
+                                    <select id="post-angle" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
+                                        <option value="A1">A1: Reprice the Category (Incumbents vs Lean Architecture)</option>
+                                        <option value="A2">A2: Content-to-Pipeline Build Log</option>
+                                        <option value="A3">A3: Audience of One (Writing for the VP/Founder who Hires)</option>
+                                        <option value="A4">A4: The Scarce-Shots Math (Early Bets)</option>
+                                        <option value="A5">A5: The Unglamorous Bet (Boring Tech that Cuts Bills)</option>
+                                        <option value="A6">A6: The Limit of Delegation (What to Build Yourself)</option>
+                                        <option value="A7">A7: Designed Serendipity (Shipping Daily Prototypes)</option>
+                                        <option value="A8">A8: The Evasive-Sentence Test (Calling Out Hype with Code)</option>
+                                        <option value="A9">A9: The Delegation Line (Boundary of AI vs Human)</option>
+                                        <option value="A10">A10: Real Scars from Shipping (Voice, Trading, Streaming)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Visual Asset Type</label>
+                                    <select id="post-visual-type" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
+                                        <option value="ai_image">AI 3D/Concept Visual (Flux)</option>
+                                        <option value="quote_card">Typeset Minimal Quote-Card (Pillow)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Target Length</label>
+                                    <select id="post-length" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
+                                        <option value="medium">Medium (900-1300 chars, sweet spot)</option>
+                                        <option value="long">Long / Founder Essay (1500-1800 chars)</option>
+                                        <option value="short">Short / Punchy (400-600 chars)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="generatePost()" id="btn-generate-post" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                                    <i data-lucide="wand-2" class="w-4 h-4"></i> Generate Post & Visual
+                                </button>
+                                <button onclick="humanizeEditor()" class="px-4 py-3 bg-dark-700 hover:bg-dark-600 border border-dark-600 text-slate-200 rounded-xl text-xs font-medium transition" title="Audit and scrub custom text against 82 rules">
+                                    <i data-lucide="check-check" class="w-4 h-4 text-emerald-400"></i> Scrub
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 82-Rule Programmatic Audit Inspector -->
+                        <div id="audit-card" class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                                    <i data-lucide="shield" class="w-4 h-4 text-blue-400"></i> 82-Rule Quality Gate
+                                </h4>
+                                <span id="audit-score-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">100 / 100</span>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="bg-dark-900/60 p-2 rounded-lg border border-dark-700/50">
+                                    <div class="text-slate-400 text-[10px]">Characters</div>
+                                    <div id="audit-char-count" class="font-bold text-slate-200 text-sm mt-0.5">0</div>
+                                </div>
+                                <div class="bg-dark-900/60 p-2 rounded-lg border border-dark-700/50">
+                                    <div class="text-slate-400 text-[10px]">Flesch Ease</div>
+                                    <div id="audit-flesch" class="font-bold text-slate-200 text-sm mt-0.5">70.0</div>
+                                </div>
+                                <div class="bg-dark-900/60 p-2 rounded-lg border border-dark-700/50">
+                                    <div class="text-slate-400 text-[10px]">Em-Dashes</div>
+                                    <div id="audit-dashes" class="font-bold text-slate-200 text-sm mt-0.5">0</div>
+                                </div>
+                            </div>
+
+                            <div id="audit-violations" class="text-xs space-y-1 text-slate-300">
+                                <div class="text-emerald-400 flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5"></i> Zero AI buzzwords detected. Clean human prose.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Live LinkedIn Post Mockup -->
+                    <div class="lg:col-span-6 space-y-4">
+                        <div class="bg-white text-slate-900 rounded-2xl shadow-xl border border-slate-200 p-5 space-y-3">
+                            <!-- Author Header -->
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white font-bold text-base shadow">
+                                        R
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-900 flex items-center gap-1">
+                                            Raulf International LLC <span class="text-slate-400 text-xs font-normal">• 1st</span>
+                                        </div>
+                                        <div class="text-xs text-slate-500">Founder & Software Architect | Sultrix Trade OS & Shadow Stream</div>
+                                        <div class="text-[10px] text-slate-400">Just now • 🌐</div>
+                                    </div>
+                                </div>
+                                <button class="text-slate-400 hover:text-slate-600"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                            </div>
+
+                            <!-- Post Content Mockup -->
+                            <div class="text-xs leading-relaxed text-slate-800 whitespace-pre-wrap font-sans select-text min-h-[160px]" id="preview-text">
+Click "Generate Post & Visual" to draft a high-reach post grounded in your real projects (Sultrix Trade OS, Shadow Stream, Shadow Voice, CRM, Raulf International).
+
+Your post will display here with live fold cut-off detection and an attached visual asset.
+                            </div>
+
+                            <!-- Attached Image Preview -->
+                            <div id="preview-image-container" class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center min-h-[220px]">
+                                <span class="text-xs text-slate-400 flex items-center gap-1.5">
+                                    <i data-lucide="image" class="w-4 h-4"></i> Attached visual preview
+                                </span>
+                            </div>
+
+                            <!-- LinkedIn Engagement Bar -->
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+                                <span class="flex items-center gap-1.5"><i data-lucide="thumbs-up" class="w-4 h-4"></i> Like</span>
+                                <span class="flex items-center gap-1.5"><i data-lucide="message-square" class="w-4 h-4"></i> Comment</span>
+                                <span class="flex items-center gap-1.5"><i data-lucide="repeat" class="w-4 h-4"></i> Repost</span>
+                                <span class="flex items-center gap-1.5"><i data-lucide="send" class="w-4 h-4"></i> Send</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="flex gap-2">
+                            <button onclick="saveDraft()" class="flex-1 py-2.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+                                <i data-lucide="bookmark" class="w-4 h-4 text-slate-400"></i> Save to Drafts
+                            </button>
+                            <button onclick="publishCurrentPost()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30">
+                                <i data-lucide="send" class="w-4 h-4"></i> Publish / Copy Text
+                            </button>
+                        </div>
+
+                        <!-- Saved Drafts & History Section -->
+                        <div class="bg-dark-800 border border-dark-700 p-4 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2">
+                                    <i data-lucide="archive" class="w-4 h-4 text-purple-400"></i> Saved Drafts & History
+                                </h4>
+                                <button onclick="loadSavedDrafts()" class="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh
+                                </button>
+                            </div>
+                            <div id="saved-drafts-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar">
+                                <div class="text-xs text-slate-500 py-2 text-center">No saved drafts found yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: COGNITIVE BRAIN -->
+            <div id="tab-brain" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Agent Cognitive Brain & Memory</h2>
+                        <p class="text-sm text-slate-400">Where the agent learns, remembers real career receipts, and evolves strategy</p>
+                    </div>
+                    <button onclick="triggerReflection()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg shadow-emerald-600/20">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Run Cognitive Self-Reflection
+                    </button>
+                </div>
+
+                <!-- Story Bank Section -->
+                <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-base flex items-center gap-2">
+                                <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i> Story Bank (Receipts & Verified Builds)
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">The agent references these real systems in all drafts so facts are never fabricated.</p>
+                        </div>
+                        <button onclick="openAddStoryModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1.5">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Receipt
+                        </button>
+                    </div>
+
+                    <div id="story-bank-table" class="space-y-2.5">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Voice Profile & Style Guardrails -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-3">
+                        <h3 class="font-bold text-base flex items-center gap-2">
+                            <i data-lucide="sliders" class="w-4 h-4 text-purple-400"></i> Voice Profile & Fingerprint
+                        </h3>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Author Bio</label>
+                            <input type="text" id="voice-bio" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2 text-xs text-slate-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Preferred Verbs & Vocabulary</label>
+                            <input type="text" id="voice-preferred" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2 text-xs text-slate-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Banned Words & Buzzwords</label>
+                            <input type="text" id="voice-banned" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2 text-xs text-slate-200">
+                        </div>
+                        <button onclick="saveVoiceProfile()" class="w-full py-2 bg-dark-700 hover:bg-dark-600 rounded-xl text-xs font-medium transition text-slate-200">
+                            Save Voice Profile
+                        </button>
+                    </div>
+
+                    <!-- Reflection Log -->
+                    <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-3">
+                        <h3 class="font-bold text-base flex items-center gap-2">
+                            <i data-lucide="history" class="w-4 h-4 text-blue-400"></i> Strategic Reflection History
+                        </h3>
+                        <div id="reflection-history" class="space-y-2.5 max-h-[260px] overflow-y-auto custom-scrollbar">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: PROFILE OPTIMIZER -->
+            <div id="tab-profile" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">LinkedIn Profile Optimizer</h2>
+                        <p class="text-sm text-slate-400">Audit and rewrite your Headline, About, and Featured sections using your real builds</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left: Instructions / Notes -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-3">
+                            <label class="block text-xs font-semibold uppercase text-slate-400">Instructions or What to Highlight</label>
+                            <textarea id="profile-notes" rows="6" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-3 text-xs leading-relaxed text-slate-200 focus:outline-none focus:border-blue-500">I have built Sultrix Trade OS (sultrixtrade.com), Shadow Stream streaming site and app (ssmovietvs.site), CRM dashboard (crm.rmsol.org/preview), Relyguru's website (relygurus.com), and The Raulf International LLC Website (raulfinternational.com). I provide custom software engineering, AI agent development, Shadow Voice real-time telephony, and SEO agents.</textarea>
+
+                            <button onclick="optimizeProfile()" id="btn-optimize-profile" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Run 9-Point Profile Optimization
+                            </button>
+                        </div>
+
+                        <!-- 9-Point Scorecard -->
+                        <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-2.5">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">9-Component Scorecard</h4>
+                            <div id="scorecard-list" class="space-y-1.5 text-xs">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Optimized Output -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-base flex items-center gap-2">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i> Optimized Profile Draft
+                                </h3>
+                                <button onclick="copyProfileText()" class="text-xs bg-dark-700 hover:bg-dark-600 text-slate-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Section
+                                </button>
+                            </div>
+
+                            <div id="profile-optimized-output" class="bg-dark-900 border border-dark-700/80 rounded-xl p-4 text-xs font-mono text-slate-200 leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto custom-scrollbar">
+Click "Run 9-Point Profile Optimization" to rewrite your Headline, 7-Step About section, Featured items, and Experience bullets using your real systems.
+                            </div>
+
+                            <button onclick="applyProfile()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4"></i> Apply Changes to LinkedIn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: COMMENTS SWEEPER -->
+            <div id="tab-comments" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Comment Thread Sweeper</h2>
+                        <p class="text-sm text-slate-400">Sweep post threads, filter low-value spam, and draft human replies with 2-level flattening</p>
+                    </div>
+                </div>
+
+                <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1.5">Post URL or Context</label>
+                        <input type="text" id="comment-post-url" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-3 text-sm focus:border-blue-500 focus:outline-none" placeholder="https://www.linkedin.com/posts/your-activity-id">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="runCommentSweep()" class="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2">
+                            <i data-lucide="filter" class="w-4 h-4"></i> Sweep & Filter Comments
+                        </button>
+                    </div>
+
+                    <div id="sweep-results" class="space-y-3 pt-2">
+                        <div class="text-xs text-slate-400 italic">No active sweep running. Enter a post or click Sweep to process comment queue.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: INBOX & DMS -->
+            <div id="tab-inbox" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Direct Message Manager</h2>
+                        <p class="text-sm text-slate-400">Classify inbound inquiries, filter cold pitches, and draft high-converting human replies</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-5 bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-3">
+                        <h3 class="font-bold text-sm text-slate-300">Test Inbound DM</h3>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Sender Name & Role</label>
+                            <input type="text" id="dm-sender" value="Alex Rivera (VP of Engineering)" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Inbound Message</label>
+                            <textarea id="dm-text" rows="4" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2 text-xs">Saw your post about Sultrix Trade OS and low-latency order routing. We are building an algorithmic trading dashboard and need custom WebSockets and real-time execution. Do you take on custom development?</textarea>
+                        </div>
+                        <button onclick="processDM()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Classify & Draft Reply
+                        </button>
+                    </div>
+
+                    <div class="lg:col-span-7 bg-dark-800 border border-dark-700 p-5 rounded-2xl space-y-4">
+                        <h3 class="font-bold text-sm text-slate-300">AI Proposed Human Response</h3>
+                        <div id="dm-response-card" class="bg-dark-900 border border-dark-700/80 rounded-xl p-4 space-y-3 text-xs">
+                            <div class="text-slate-400 italic">Submit a test message to preview intent classification and response.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: 7-DAY CONTENT PLANNER -->
+            <div id="tab-planner" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">7-Day Editorial Content Calendar</h2>
+                        <p class="text-sm text-slate-400">Generate a balanced multi-pillar weekly strategy mapped to 2026 hook formulas</p>
+                    </div>
+                    <button onclick="generatePlan()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-semibold transition flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4"></i> Generate New 7-Day Plan
+                    </button>
+                </div>
+
+                <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl">
+                    <div id="planner-output" class="text-xs leading-relaxed whitespace-pre-wrap font-mono text-slate-300">
+Click "Generate New 7-Day Plan" to build a customized weekly calendar balancing Conviction, Building in Public, Ledgers, and Case Studies.
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: SETTINGS -->
+            <div id="tab-settings" class="tab-pane hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Agent Configuration & Credentials</h2>
+                        <p class="text-sm text-slate-400">Manage OpenRouter models, execution backends, and browser connectivity</p>
+                    </div>
+                </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs font-semibold text-slate-400">OpenRouter API Key</label>
+                            <span id="api-key-status" class="text-[11px] font-mono text-emerald-400">Loading...</span>
+                        </div>
+                        <input type="password" id="setting-api-key" placeholder="sk-or-v1-..." class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">OpenRouter Free Model</label>
+                        <select id="setting-model" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200">
+                            <option value="openrouter/free">openrouter/free (Auto-routing recommended)</option>
+                            <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free</option>
+                            <option value="google/gemma-4-26b-a4b-it:free">google/gemma-4-26b-a4b-it:free</option>
+                            <option value="inclusionai/ling-3.0-flash-sante:free">inclusionai/ling-3.0-flash-sante:free</option>
+                            <option value="nvidia/nemotron-3.5-lightning:free">nvidia/nemotron-3.5-lightning:free</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">LinkedIn Execution Mode</label>
+                        <select id="setting-mode" class="w-full bg-dark-900 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200">
+                            <option value="manual">Manual Review & Copy-Paste (Safest, 1-Click Clipboard)</option>
+                            <option value="browser">Browser Automation (Playwright headless/headed)</option>
+                            <option value="publora">Publora REST API (15 free posts/mo)</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-3 border-t border-dark-700 space-y-3">
+                        <h4 class="text-xs font-bold uppercase text-slate-400">Direct Browser Connection</h4>
+                        <p class="text-xs text-slate-400">Opens a headed browser window so you can log into LinkedIn once. Cookies are saved safely in your local profile.</p>
+                        <button onclick="connectBrowser()" class="py-2.5 px-4 bg-dark-700 hover:bg-dark-600 border border-dark-600 rounded-xl text-xs font-semibold text-slate-200 transition flex items-center gap-2">
+                            <i data-lucide="globe" class="w-4 h-4 text-blue-400"></i> Connect LinkedIn Browser Session
+                        </button>
+                    </div>
+
+                    <button onclick="saveSettings()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Add/Edit Story Modal -->
+    <div id="modal-add-story" onclick="if(event.target === this) closeAddStoryModal()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg p-6 space-y-4">
+            <h3 id="modal-story-title" class="font-bold text-base flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-5 h-5 text-blue-400"></i> Add Story Bank Receipt
+            </h3>
+            <input type="hidden" id="modal-story-id" value="">
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Category</label>
+                    <input type="text" id="modal-category" placeholder="Product, Architecture, Client Project" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Title / Project Name</label>
+                    <input type="text" id="modal-title" placeholder="e.g. Sultrix Trade OS" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Details & What was built</label>
+                    <textarea id="modal-detail" rows="3" placeholder="What problem was solved, architecture specifics..." class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2"></textarea>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Concrete Numbers & Receipts</label>
+                    <input type="text" id="modal-metrics" placeholder="e.g. Sub-500ms latency, 10k users, $4,200 server bills cut" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Live URL</label>
+                        <input type="text" id="modal-url" placeholder="https://..." class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Year / Date</label>
+                        <input type="text" id="modal-date" placeholder="2025-2026" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-2">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeAddStoryModal()" class="px-4 py-2 bg-dark-700 text-slate-300 rounded-xl text-xs font-medium">Cancel</button>
+                <button id="btn-submit-story" onclick="submitNewStory()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold">Save to Brain</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

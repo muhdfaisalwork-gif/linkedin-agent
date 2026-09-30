@@ -1,0 +1,51 @@
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from core.rules.rules_engine import RulesEngine
+from core.rules.humanizer import Humanizer
+
+def test_banned_words_detection():
+    ai_text = "In today's digital landscape, we delve into pivotal solutions to leverage robust synergies and foster innovation."
+    audit = RulesEngine.audit_text(ai_text)
+    assert not audit["is_compliant"]
+    assert audit["score"] < 80
+    assert "delve" in audit["banned_words_found"]
+    assert "pivotal" in audit["banned_words_found"]
+
+def test_humanizer_scrub():
+    ai_text = "We utilize this method to facilitate deployments and leverage our infrastructure."
+    cleaned, audit = Humanizer.humanize_text(ai_text)
+    assert "utilize" not in cleaned.lower()
+    assert "facilitate" not in cleaned.lower()
+    assert "use" in cleaned.lower()
+    assert "help" in cleaned.lower()
+
+def test_em_dash_cap():
+    text_with_many_dashes = "We shipped the trade engine — cut latency — saved $4,000 — and tested it — in production."
+    audit = RulesEngine.audit_text(text_with_many_dashes)
+    assert audit["em_dash_count"] == 4
+    # Clean it
+    cleaned, clean_audit = Humanizer.humanize_text(text_with_many_dashes)
+    assert clean_audit["em_dash_count"] <= 2
+
+def test_flesch_reading_score():
+    simple_text = "We built Sultrix Trade OS to route orders faster. It cut execution latency down to 420 milliseconds."
+    score = RulesEngine.calculate_flesch(simple_text)
+    assert score > 50.0
+
+def test_case_preserving_replacement():
+    capitalized_text = "Utilize this architecture to facilitate testing. DELVE into the metrics."
+    cleaned, audit = Humanizer.humanize_text(capitalized_text)
+    # Ensure capitalization is preserved
+    assert cleaned.startswith("Use")
+    assert "help testing" in cleaned
+    assert "EXAMINE" in cleaned or "Look closely at" in cleaned
+
+if __name__ == "__main__":
+    test_banned_words_detection()
+    test_humanizer_scrub()
+    test_em_dash_cap()
+    test_flesch_reading_score()
+    test_case_preserving_replacement()
+    print("All Rules tests passed successfully!")
