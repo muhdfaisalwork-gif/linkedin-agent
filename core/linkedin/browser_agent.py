@@ -83,19 +83,23 @@ class LinkedInBrowserAgent:
             with sync_playwright() as p:
                 context = self._launch_context(p, headless=False, viewport={"width": 1280, "height": 850})
                 page = context.pages[0] if context.pages else context.new_page()
-                page.goto("https://www.linkedin.com/login")
+                try:
+                    page.goto("https://www.linkedin.com/login", wait_until="domcontentloaded", timeout=45000)
+                except Exception:
+                    # Ignore background tracking/analytics timeouts; proceed to interactive login loop
+                    pass
 
-                # Poll up to 180 seconds for user to complete login
+                # Poll up to 300 seconds (5 mins) for user to complete login
                 # Detects if user reaches feed, profile, or closes the window
                 logged_in = False
-                for _ in range(180):
+                for _ in range(300):
                     try:
                         time.sleep(1)
                         if page.is_closed():
                             break
                         cur_url = page.url.lower()
-                        # If reached feed or profile page, login was successful
-                        if any(k in cur_url for k in ["/feed", "/in/", "/mynetwork", "/messaging"]):
+                        # If reached feed, profile, or any authenticated page, login was successful
+                        if any(k in cur_url for k in ["/feed", "/in/", "/mynetwork", "/messaging", "/jobs", "/notifications"]):
                             logged_in = True
                             # Wait 2 seconds for session cookies to be written to storage
                             time.sleep(2)
@@ -114,7 +118,7 @@ class LinkedInBrowserAgent:
                     return {"status": "cancelled", "message": "Browser was closed before LinkedIn login finished. Please try again."}
 
         try:
-            return self._run_in_worker_thread(_action, timeout=190)
+            return self._run_in_worker_thread(_action, timeout=310)
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
@@ -128,8 +132,10 @@ class LinkedInBrowserAgent:
             with sync_playwright() as p:
                 context = self._launch_context(p, headless=self.headless)
                 page = context.pages[0] if context.pages else context.new_page()
-                page.goto("https://www.linkedin.com/feed/")
-                page.wait_for_load_state("domcontentloaded")
+                try:
+                    page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=45000)
+                except Exception:
+                    pass
 
                 # Check if logged in
                 if "login" in page.url or "checkpoint" in page.url:
@@ -194,8 +200,10 @@ class LinkedInBrowserAgent:
             with sync_playwright() as p:
                 context = self._launch_context(p, headless=self.headless)
                 page = context.pages[0] if context.pages else context.new_page()
-                page.goto("https://www.linkedin.com/in/me/")
-                page.wait_for_load_state("domcontentloaded")
+                try:
+                    page.goto("https://www.linkedin.com/in/me/", wait_until="domcontentloaded", timeout=45000)
+                except Exception:
+                    pass
 
                 # Check if logged in
                 if "login" in page.url or "checkpoint" in page.url:
@@ -216,8 +224,10 @@ class LinkedInBrowserAgent:
                             page.wait_for_timeout(2000)
 
                 if about:
-                    page.goto("https://www.linkedin.com/in/me/")
-                    page.wait_for_load_state("domcontentloaded")
+                    try:
+                        page.goto("https://www.linkedin.com/in/me/", wait_until="domcontentloaded", timeout=45000)
+                    except Exception:
+                        pass
                     edit_about = page.locator("button[aria-label='Edit about'], a[href*='/edit/about']").first
                     if edit_about.count() > 0:
                         edit_about.click()
@@ -248,8 +258,10 @@ class LinkedInBrowserAgent:
             with sync_playwright() as p:
                 context = self._launch_context(p, headless=self.headless)
                 page = context.pages[0] if context.pages else context.new_page()
-                page.goto(post_url)
-                page.wait_for_load_state("domcontentloaded")
+                try:
+                    page.goto(post_url, wait_until="domcontentloaded", timeout=45000)
+                except Exception:
+                    pass
 
                 if "login" in page.url or "checkpoint" in page.url:
                     context.close()
@@ -288,8 +300,10 @@ class LinkedInBrowserAgent:
 
                 # If recipient is a full URL or profile name
                 url = recipient_profile_or_thread if recipient_profile_or_thread.startswith("http") else f"https://www.linkedin.com/in/{recipient_profile_or_thread.strip('/')}/"
-                page.goto(url)
-                page.wait_for_load_state("domcontentloaded")
+                try:
+                    page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                except Exception:
+                    pass
 
                 if "login" in page.url or "checkpoint" in page.url:
                     context.close()
