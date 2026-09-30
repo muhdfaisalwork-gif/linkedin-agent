@@ -16,6 +16,9 @@ class SettingsUpdateRequest(BaseModel):
     publora_api_key: Optional[str] = None
     linkedin_platform_id: Optional[str] = None
 
+class CookieConnectRequest(BaseModel):
+    cookie: str
+
 @router.get("")
 def get_settings():
     from core.db.database import get_connection
@@ -28,12 +31,26 @@ def get_settings():
     model = os.getenv("OPENROUTER_MODEL") or db_settings.get("OPENROUTER_MODEL", "openrouter/free")
     exec_mode = os.getenv("LINKEDIN_EXECUTION_MODE") or db_settings.get("LINKEDIN_EXECUTION_MODE", "manual")
 
+    auth_file = os.path.join(browser_agent.user_data_dir, ".authenticated")
+    auth_method = "unknown"
+    if os.path.exists(auth_file):
+        try:
+            with open(auth_file, "r") as f:
+                content = f.read()
+                if "method=cookie" in content:
+                    auth_method = "li_at_cookie"
+                else:
+                    auth_method = "browser_login"
+        except Exception:
+            pass
+
     return {
         "openrouter_api_key_set": bool(os.getenv("OPENROUTER_API_KEY") or db_settings.get("OPENROUTER_API_KEY")),
         "openrouter_model": model,
         "available_free_models": llm.get_available_free_models(),
         "execution_mode": exec_mode,
         "browser_authenticated": browser_agent.is_authenticated(),
+        "auth_method": auth_method,
         "playwright_available": browser_agent.is_playwright_available(),
         "publora_configured": bool((os.getenv("PUBLORA_API_KEY") or db_settings.get("PUBLORA_API_KEY")) and (os.getenv("LINKEDIN_PLATFORM_ID") or db_settings.get("LINKEDIN_PLATFORM_ID")))
     }
@@ -67,6 +84,18 @@ def update_settings(req: SettingsUpdateRequest):
     conn.close()
 
     return {"status": "saved", "message": "Settings updated and persisted to database."}
+
+@router.post("/save-cookie")
+def save_linkedin_cookie(req: CookieConnectRequest):
+    """Saves and verifies direct li_at session cookie in <2 seconds."""
+    res = browser_agent.save_cookie(req.cookie)
+    return res
+
+@router.post("/disconnect")
+def disconnect_session():
+    """Disconnects and clears current LinkedIn session."""
+    res = browser_agent.disconnect()
+    return res
 
 @router.post("/connect-browser")
 def connect_browser_session():

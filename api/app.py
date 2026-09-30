@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from core.db.database import init_db
 from core.scheduler.agent_runner import AutonomousAgentRunner
 
-from api.routes import posts, profile, brain, comments, inbox, analytics, settings, planner
+from api.routes import posts, profile, brain, comments, inbox, analytics, settings, planner, reach
 
 runner = AutonomousAgentRunner(check_interval_seconds=60)
 
@@ -57,6 +57,7 @@ app.include_router(inbox.router)
 app.include_router(analytics.router)
 app.include_router(settings.router)
 app.include_router(planner.router)
+app.include_router(reach.router)
 
 # Mount static and storage folders
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))

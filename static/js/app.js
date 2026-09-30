@@ -53,6 +53,7 @@ function switchTab(tabId) {
     if (tabId === 'studio') loadSavedDrafts();
     if (tabId === 'brain') { loadStoryBank(); loadVoiceProfile(); loadReflections(); }
     if (tabId === 'settings') loadSettings();
+    if (tabId === 'reach') loadScannedFeed();
 }
 
 // 1. ANALYTICS & REACH
@@ -930,15 +931,19 @@ async function loadSettings() {
             }
         }
 
-        // Browser Authentication Status
+        // Browser Authentication Status & Method
         const browserStatus = document.getElementById('browser-auth-status');
+        const disconnectBtn = document.getElementById('btn-disconnect');
         if (browserStatus) {
             if (data.browser_authenticated) {
-                browserStatus.innerText = '✓ Connected (Session Saved)';
-                browserStatus.className = 'text-[11px] font-mono text-emerald-400';
+                const methodLabel = data.auth_method === 'li_at_cookie' ? 'li_at Cookie' : 'Browser Session';
+                browserStatus.innerText = `✓ Connected (${methodLabel})`;
+                browserStatus.className = 'text-xs px-2.5 py-1 rounded-full font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
             } else {
                 browserStatus.innerText = '⚠️ Not Connected';
-                browserStatus.className = 'text-[11px] font-mono text-amber-400';
+                browserStatus.className = 'text-xs px-2.5 py-1 rounded-full font-mono bg-amber-500/10 border border-amber-500/30 text-amber-400';
+                if (disconnectBtn) disconnectBtn.classList.add('hidden');
             }
         }
     } catch (e) {
@@ -979,12 +984,70 @@ async function saveSettings() {
     }
 }
 
-async function connectBrowser() {
-    const btn = document.getElementById('btn-connect-browser');
-    const originalHtml = btn ? btn.innerHTML : `<i data-lucide="globe" class="w-4 h-4 text-blue-400"></i> Connect LinkedIn Browser Session`;
+// Direct li_at Cookie Connection (Instant < 1s)
+async function saveCookieSession() {
+    const input = document.getElementById('setting-cookie-input');
+    const cookieVal = input ? input.value.trim() : '';
+    if (!cookieVal) {
+        alert('Please paste your li_at cookie first.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-save-cookie');
+    const originalHtml = btn ? btn.innerHTML : 'Save & Connect';
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-amber-400"></i> Browser Open — Log into LinkedIn in the opened window...`;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Verifying with LinkedIn...`;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+        const res = await fetch('/api/settings/save-cookie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cookie: cookieVal })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            alert('🎉 ' + data.message);
+            if (input) input.value = '';
+            await loadSettings();
+        } else {
+            alert('⚠️ ' + (data.message || 'Cookie verification failed.'));
+        }
+    } catch (e) {
+        alert('Error connecting with cookie: ' + e.message);
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+async function disconnectSession() {
+    if (!confirm('Are you sure you want to disconnect your LinkedIn session?')) return;
+    try {
+        const res = await fetch('/api/settings/disconnect', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message || 'Session disconnected.');
+        await loadSettings();
+    } catch (e) {
+        alert('Disconnect error: ' + e.message);
+    }
+}
+
+function closeBrowserLoginModal() {
+    const modal = document.getElementById('modal-browser-login');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function connectBrowser() {
+    const modal = document.getElementById('modal-browser-login');
+    if (modal) {
+        modal.classList.remove('hidden');
         if (window.lucide) lucide.createIcons();
     }
 
@@ -992,6 +1055,7 @@ async function connectBrowser() {
         const res = await fetch('/api/settings/connect-browser', { method: 'POST' });
         const data = await res.json();
 
+        closeBrowserLoginModal();
         if (data.status === 'success') {
             alert('🎉 ' + data.message);
         } else if (data.status === 'cancelled') {
@@ -1000,13 +1064,234 @@ async function connectBrowser() {
             alert('⚠️ ' + (data.message || 'Error launching browser session'));
         }
     } catch (e) {
+        closeBrowserLoginModal();
         alert('Network/Server error while connecting browser: ' + e.message);
+    } finally {
+        await loadSettings();
+    }
+}
+
+// 9. AGENT REACH & FEED EYES
+async function scanLiveFeed() {
+    const btn = document.getElementById('btn-scan-feed');
+    const statusEl = document.getElementById('reach-scan-status');
+    const originalHtml = btn ? btn.innerHTML : 'Scan Live Feed Now';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Agent Eyes Active (Scanning Feed)...`;
+        if (window.lucide) lucide.createIcons();
+    }
+    if (statusEl) statusEl.innerText = 'Scanning live feed...';
+
+    try {
+        const res = await fetch('/api/reach/scan-feed', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            if (statusEl) statusEl.innerText = `Scanned ${data.posts_found || 0} updates`;
+
+            // Screenshot display
+            if (data.screenshot_url) {
+                const img = document.getElementById('feed-screenshot-img');
+                const placeholder = document.getElementById('visual-placeholder');
+                if (img) {
+                    img.src = data.screenshot_url + '?t=' + Date.now();
+                    img.classList.remove('hidden');
+                }
+                if (placeholder) placeholder.classList.add('hidden');
+            }
+
+            // Vision Cortex text
+            const visionText = document.getElementById('vision-feedback-text');
+            if (visionText && data.vision_analysis) {
+                visionText.innerHTML = escapeHtml(data.vision_analysis).replace(/\n/g, '<br>');
+            }
+
+            // Render posts
+            if (data.posts && data.posts.length > 0) {
+                renderScannedFeed(data.posts);
+            } else {
+                loadScannedFeed();
+            }
+        } else if (data.status === 'auth_required') {
+            alert('⚠️ ' + data.message);
+            switchTab('settings');
+        } else {
+            alert('Feed scan error: ' + (data.message || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Scan request failed: ' + e.message);
     } finally {
         if (btn) {
             btn.innerHTML = originalHtml;
             btn.disabled = false;
             if (window.lucide) lucide.createIcons();
         }
-        await loadSettings();
+    }
+}
+
+async function loadScannedFeed() {
+    try {
+        const res = await fetch('/api/reach/feed');
+        const data = await res.json();
+        if (data.posts) {
+            renderScannedFeed(data.posts);
+        }
+    } catch (e) {
+        console.error('Error loading scanned feed:', e);
+    }
+}
+
+function renderScannedFeed(posts) {
+    const list = document.getElementById('scanned-feed-list');
+    const countEl = document.getElementById('scanned-count');
+    if (countEl) countEl.innerText = posts.length;
+
+    if (!list) return;
+    if (posts.length === 0) {
+        list.innerHTML = `
+            <div class="col-span-full text-center py-8 text-xs text-slate-500">
+                No scanned posts yet. Click "Scan Live Feed Now" to look into your LinkedIn feed.
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = posts.map((p, idx) => {
+        const author = escapeHtml(p.author_name || 'LinkedIn Member');
+        const headline = escapeHtml(p.author_headline || '');
+        const text = escapeHtml(p.post_text || '');
+        const urn = escapeHtml(p.post_urn || p.post_url || '');
+        const reactions = p.reaction_count || 0;
+        const comments = p.comment_count || 0;
+
+        return `
+            <div class="bg-dark-900 border border-dark-700/80 rounded-xl p-4 flex flex-col justify-between space-y-3 hover:border-dark-600 transition">
+                <div class="space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <div class="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i> ${author}
+                            </div>
+                            ${headline ? `<div class="text-[10px] text-slate-400 line-clamp-1">${headline}</div>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono shrink-0">
+                            <span title="Reactions" class="flex items-center gap-0.5"><i data-lucide="thumbs-up" class="w-3 h-3 text-blue-400"></i> ${reactions}</span>
+                            <span title="Comments" class="flex items-center gap-0.5"><i data-lucide="message-square" class="w-3 h-3 text-cyan-400"></i> ${comments}</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed line-clamp-4 whitespace-pre-wrap">${text}</p>
+                </div>
+
+                <div class="pt-2 border-t border-dark-700/50 flex flex-wrap items-center justify-between gap-2">
+                    <button onclick="remixPostIntoStudio('${escapeHtml(author).replace(/'/g, "\\'")}', '${escapeHtml(text.slice(0, 120)).replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] bg-dark-800 hover:bg-dark-700 text-purple-300 border border-purple-500/30 rounded-lg transition flex items-center gap-1 font-medium">
+                        <i data-lucide="sparkles" class="w-3 h-3 text-purple-400"></i> Remix in Studio
+                    </button>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="draftReplyForScannedPost('${escapeHtml(author).replace(/'/g, "\\'")}', '${escapeHtml(text.slice(0, 180)).replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition flex items-center gap-1 font-semibold">
+                            <i data-lucide="message-circle" class="w-3 h-3"></i> Draft Reply
+                        </button>
+                        ${urn ? `
+                        <button onclick="likeLinkedInPost('${urn.replace(/'/g, "\\'")}')" class="p-1.5 bg-dark-800 hover:bg-dark-700 text-slate-300 rounded-lg transition" title="Like on LinkedIn">
+                            <i data-lucide="heart" class="w-3.5 h-3.5 text-rose-400"></i>
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+}
+
+function remixPostIntoStudio(author, snippet) {
+    switchTab('studio');
+    const topicInput = document.getElementById('input-topic');
+    if (topicInput) {
+        topicInput.value = `Contrarian perspective on industry post by ${author}: "${snippet}..."`;
+    }
+}
+
+function draftReplyForScannedPost(author, snippet) {
+    switchTab('comments');
+    const sweepBox = document.getElementById('comment-post-url');
+    if (sweepBox) {
+        sweepBox.value = `Perspective on post by ${author}: "${snippet}"`;
+    }
+    runCommentSweep();
+}
+
+async function likeLinkedInPost(postUrn) {
+    try {
+        const res = await fetch('/api/reach/like', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post_urn: postUrn })
+        });
+        const data = await res.json();
+        alert(data.message || 'Post liked!');
+    } catch (e) {
+        alert('Like error: ' + e.message);
+    }
+}
+
+async function inspectUrlWithReach() {
+    const input = document.getElementById('inspect-url-input');
+    const url = input ? input.value.trim() : '';
+    if (!url) {
+        alert('Please enter a URL to inspect.');
+        return;
+    }
+
+    const box = document.getElementById('inspect-result-box');
+    const btn = document.getElementById('btn-inspect-url');
+    const originalHtml = btn ? btn.innerHTML : 'Inspect';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Reading...`;
+        if (window.lucide) lucide.createIcons();
+    }
+    if (box) {
+        box.innerHTML = `<div class="text-center py-10 text-xs text-blue-400 animate-pulse">Dual-Backend Reach engine reading URL and synthesizing strategic angles...</div>`;
+    }
+
+    try {
+        const res = await fetch('/api/reach/inspect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            box.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-dark-700">
+                        <h4 class="font-bold text-xs text-slate-100 line-clamp-1">${escapeHtml(data.title || 'Inspected Resource')}</h4>
+                        <span class="text-[10px] px-2 py-0.5 rounded font-mono bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase">${data.backend || 'jina'}</span>
+                    </div>
+                    <div class="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap font-sans">${escapeHtml(data.ai_analysis || data.raw_summary)}</div>
+                    <div class="pt-2 flex justify-end gap-2">
+                        <button onclick="remixPostIntoStudio('Inspected Article', '${escapeHtml(data.title || '').replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                            <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Write Post on This Angle
+                        </button>
+                    </div>
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+        } else {
+            box.innerHTML = `<div class="text-xs text-rose-400 p-4">Inspection error: ${escapeHtml(data.message || 'Failed to extract content')}</div>`;
+        }
+    } catch (e) {
+        box.innerHTML = `<div class="text-xs text-rose-400 p-4">Request error: ${escapeHtml(e.message)}</div>`;
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
     }
 }

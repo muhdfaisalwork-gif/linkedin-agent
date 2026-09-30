@@ -166,6 +166,23 @@ def init_db():
         )
     ''')
 
+    # Scanned Feed Posts (Agent Reach Eyes)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS scanned_feed_posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            author_name TEXT,
+            author_headline TEXT,
+            author_avatar TEXT,
+            post_text TEXT,
+            post_url TEXT,
+            reaction_count INTEGER DEFAULT 0,
+            comment_count INTEGER DEFAULT 0,
+            media_url TEXT,
+            screenshot_path TEXT,
+            scanned_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     conn.commit()
 
     # Pre-seed defaults and user's rich Story Bank & Heuristics
