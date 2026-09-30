@@ -83,3 +83,16 @@ def draft_external_comment(req: ExternalCommentRequest):
         return drafter.draft_comment(post_text=req.post_text, author_name=req.author_name)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class SendReplyRequest(BaseModel):
+    post_url: str
+    reply_text: str
+
+@router.post("/send-reply")
+def send_comment_reply(req: SendReplyRequest):
+    try:
+        from core.linkedin.dispatcher import LinkedInDispatcher
+        dispatcher = LinkedInDispatcher()
+        return dispatcher.reply_to_comment(post_url=req.post_url, reply_text=req.reply_text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

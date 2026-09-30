@@ -50,9 +50,8 @@ class AutonomousAgentRunner:
 
         for post in due_posts:
             try:
-                # Dispatch publish
                 result = self.dispatcher.publish_post(post["content"], post["image_url"])
-                if result.get("status") != "error":
+                if result.get("status") in ("success", "manual"):
                     cursor.execute('''
                         UPDATE posts
                         SET status = 'published', published_time = CURRENT_TIMESTAMP

@@ -65,11 +65,13 @@ def save_post(req: SavePostRequest):
     conn = get_connection()
     cursor = conn.cursor()
 
-    scheduled = req.scheduled_time
+    scheduled = req.scheduled_time.strip() if req.scheduled_time else None
     if scheduled:
         scheduled = scheduled.replace("T", " ")
         if len(scheduled) == 16:
             scheduled += ":00"
+    else:
+        scheduled = None
 
     if req.post_id:
         cursor.execute('''
@@ -144,15 +146,23 @@ def publish_post(post_id: int):
         raise HTTPException(status_code=404, detail="Post not found")
 
     res = dispatcher.publish_post(post["content"], post["image_url"])
-    if res.get("status") != "error":
+    status_code = res.get("status", "error")
+    if status_code in ("success", "manual"):
         cursor.execute('''
             UPDATE posts
             SET status = 'published', published_time = CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (post_id,))
         conn.commit()
+    elif status_code == "auth_required":
+        cursor.execute('''
+            UPDATE posts
+            SET status = 'draft'
+            WHERE id = ?
+        ''', (post_id,))
+        conn.commit()
     conn.close()
-    return {"status": res.get("status", "success"), "dispatch_result": res}
+    return {"status": status_code, "dispatch_result": res}
 
 @router.post("/humanize")
 def humanize_text_api(req: HumanizeRequest):

@@ -361,14 +361,23 @@ Your post will display here with live fold cut-off detection and an attached vis
                             </div>
                         </div>
 
-                        <!-- Action Bar -->
-                        <div class="flex gap-2">
-                            <button onclick="saveDraft()" class="flex-1 py-2.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
-                                <i data-lucide="bookmark" class="w-4 h-4 text-slate-400"></i> Save to Drafts
-                            </button>
-                            <button onclick="publishCurrentPost()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30">
-                                <i data-lucide="send" class="w-4 h-4"></i> Publish / Copy Text
-                            </button>
+                        <!-- Action Bar & Scheduling -->
+                        <div class="space-y-2">
+                            <div class="flex gap-2">
+                                <button onclick="saveDraft()" class="flex-1 py-2.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+                                    <i data-lucide="bookmark" class="w-4 h-4 text-slate-400"></i> Save to Drafts
+                                </button>
+                                <button onclick="publishCurrentPost()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30">
+                                    <i data-lucide="send" class="w-4 h-4"></i> Publish / Copy Text
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 bg-dark-800 border border-dark-700/80 rounded-xl p-2 text-xs">
+                                <i data-lucide="clock" class="w-4 h-4 text-indigo-400 shrink-0 ml-1"></i>
+                                <input type="datetime-local" id="post-schedule-time" class="bg-dark-900 border border-dark-700 text-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none flex-1 font-mono">
+                                <button onclick="scheduleCurrentPost()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shrink-0">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Schedule
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Saved Drafts & History Section -->

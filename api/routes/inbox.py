@@ -79,3 +79,16 @@ def delete_inbox_message(msg_id: int):
     if not deleted:
         raise HTTPException(status_code=404, detail="Message not found")
     return {"status": "deleted", "id": msg_id}
+
+class SendDMRequest(BaseModel):
+    recipient: str
+    message_text: str
+
+@router.post("/send")
+def send_dm_endpoint(req: SendDMRequest):
+    try:
+        from core.linkedin.dispatcher import LinkedInDispatcher
+        dispatcher = LinkedInDispatcher()
+        return dispatcher.send_dm(recipient=req.recipient, message_text=req.message_text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

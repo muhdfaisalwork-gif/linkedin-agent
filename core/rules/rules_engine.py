@@ -224,7 +224,7 @@ class RulesEngine:
     def calculate_flesch(text: str) -> float:
         """Calculate Flesch Reading Ease score."""
         sentences = [s for s in re.split(r'[.!?]+', text) if s.strip()]
-        words = re.findall(r'\b[a-zA-Z]+\b', text)
+        words = re.findall(r'\b[a-zA-Z0-9_\-]+\b', text)
         if not sentences or not words:
             return 70.0
 
@@ -233,6 +233,8 @@ class RulesEngine:
 
         def count_syllables(word):
             word = word.lower()
+            if word.isdigit():
+                return 1
             if len(word) <= 3:
                 return 1
             word = re.sub(r'(?:[^laeiouy]|ed|es|e)$', '', word)

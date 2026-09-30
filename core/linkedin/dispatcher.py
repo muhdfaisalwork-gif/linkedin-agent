@@ -70,3 +70,23 @@ class LinkedInDispatcher:
                 "message": "Profile copy generated. Navigate to LinkedIn to paste into your Headline/About, or connect Browser session.",
                 "profile_url": "https://www.linkedin.com/in/me/edit/intro/"
             }
+
+    def reply_to_comment(self, post_url: str, reply_text: str) -> Dict[str, Any]:
+        backend = self.get_active_backend()
+        if backend == "browser":
+            return self.browser_agent.reply_to_comment(post_url=post_url, reply_text=reply_text)
+        return {
+            "status": "manual",
+            "message": "Reply copied to clipboard. Paste into your LinkedIn post thread.",
+            "post_url": post_url
+        }
+
+    def send_dm(self, recipient: str, message_text: str) -> Dict[str, Any]:
+        backend = self.get_active_backend()
+        if backend == "browser":
+            return self.browser_agent.send_dm(recipient_profile_or_thread=recipient, message_text=message_text)
+        return {
+            "status": "manual",
+            "message": "Direct message drafted and copied to clipboard.",
+            "recipient": recipient
+        }

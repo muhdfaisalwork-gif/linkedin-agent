@@ -308,7 +308,7 @@ async function publishCurrentPost() {
 
     navigator.clipboard.writeText(currentPostDraft.content);
 
-    // Save and publish
+    // Save with status draft first, then publish endpoint updates status if dispatch succeeds
     try {
         const saveRes = await fetch('/api/posts/save', {
             method: 'POST',
@@ -320,7 +320,7 @@ async function publishCurrentPost() {
                 content: currentPostDraft.content,
                 image_url: currentPostDraft.image_url,
                 image_type: currentPostDraft.image_type,
-                status: 'published'
+                status: 'draft'
             })
         });
         const saved = await saveRes.json();
@@ -328,12 +328,50 @@ async function publishCurrentPost() {
         const pubData = await pubRes.json();
 
         await loadSavedDrafts();
-        alert(`✅ Post text copied to clipboard!\nStatus: ${pubData.dispatch_result?.status || 'published'}\n${pubData.dispatch_result?.message || ''}`);
+        alert(`✅ Post text copied to clipboard!\nStatus: ${pubData.dispatch_result?.status || pubData.status || 'published'}\n${pubData.dispatch_result?.message || ''}`);
         if (pubData.dispatch_result?.linkedin_composer_url) {
             window.open(pubData.dispatch_result.linkedin_composer_url, '_blank');
         }
     } catch (e) {
         alert('Publish error: ' + e);
+    }
+}
+
+async function scheduleCurrentPost() {
+    if (!currentPostDraft) {
+        alert('Generate a post draft first.');
+        return;
+    }
+    const scheduleInput = document.getElementById('post-schedule-time')?.value;
+    if (!scheduleInput) {
+        alert('Please select a date and time to schedule this post.');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/posts/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                post_id: currentPostDraft.id || currentPostDraft.post_id,
+                topic: currentPostDraft.topic,
+                hook_formula: currentPostDraft.hook_formula,
+                content: currentPostDraft.content,
+                image_url: currentPostDraft.image_url,
+                image_type: currentPostDraft.image_type,
+                status: 'scheduled',
+                scheduled_time: scheduleInput
+            })
+        });
+        const saved = await res.json();
+        if (saved.post_id) {
+            currentPostDraft.id = saved.post_id;
+            currentPostDraft.post_id = saved.post_id;
+        }
+        await loadSavedDrafts();
+        alert(`📅 Post scheduled for ${scheduleInput.replace('T', ' ')}!\nThe autonomous background agent will publish it automatically when due.`);
+    } catch (e) {
+        alert('Scheduling error: ' + e);
     }
 }
 
@@ -676,9 +714,24 @@ async function applyProfile() {
     if (data.profile_url) window.open(data.profile_url, '_blank');
 }
 
+function copyCommentReply(text, btnId) {
+    navigator.clipboard.writeText(text);
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Copied';
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => {
+            btn.innerHTML = orig;
+            if (window.lucide) lucide.createIcons();
+        }, 2000);
+    }
+}
+
 // 5. COMMENT SWEEPER
 async function runCommentSweep() {
-    const postUrl = document.getElementById('comment-post-url').value.trim() || 'https://www.linkedin.com/posts/activity-7448808898326654978';
+    const rawInput = document.getElementById('comment-post-url')?.value?.trim();
+    const postContext = rawInput || (currentPostDraft && currentPostDraft.topic ? currentPostDraft.topic : 'Built Sultrix Trade OS with custom order routing. Latency reduced from 1.2s to 420ms.');
     const resultsContainer = document.getElementById('sweep-results');
     resultsContainer.innerHTML = `<div class="text-xs text-blue-400 animate-pulse">Sweeping thread comments, applying 2-level flattening and filtering rules...</div>`;
 
@@ -687,7 +740,7 @@ async function runCommentSweep() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                post_context: 'Built Sultrix Trade OS with custom order routing. Latency reduced from 1.2s to 420ms.',
+                post_context: postContext,
                 sample_comments: [
                     { author: 'Marcus Vance', text: 'How do you handle WebSocket connection drops under heavy volatility?', depth: 1, top_level_urn: 'urn:li:comment:101' },
                     { author: 'Elena Rostova', text: 'great post thanks for sharing', depth: 1 },
@@ -702,23 +755,29 @@ async function runCommentSweep() {
                 <div class="flex items-center justify-between text-xs">
                     <span class="text-slate-400">Total Scanned: <strong>${data.total_comments}</strong></span>
                     <span class="text-emerald-400">Filtered Spam: <strong>${data.filtered_count}</strong></span>
-                    <span class="text-blue-400">Drafted: <strong>${data.actionable_count}</strong></span>
+                    <span class="text-blue-400">Actionable Drafts: <strong>${data.actionable_count}</strong></span>
                 </div>
                 <div class="space-y-2">
-                    ${data.drafts.map(d => `
+                    ${data.drafts.map((d, idx) => `
                         <div class="p-3 bg-dark-800 rounded-lg border border-dark-700/60 text-xs space-y-1.5">
                             <div class="flex items-center justify-between">
-                                <span class="font-bold text-slate-200">${d.commenter}</span>
-                                <span class="text-[10px] px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded font-mono">React: ${d.suggested_reaction}</span>
+                                <span class="font-bold text-slate-200">${escapeHtml(d.commenter)}</span>
+                                <span class="text-[10px] px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded font-mono">React: ${escapeHtml(d.suggested_reaction)}</span>
                             </div>
-                            <div class="text-slate-400 italic">"${d.comment_text}"</div>
-                            <div class="text-slate-200 bg-dark-900/60 p-2 rounded border border-dark-700/50"><strong>Reply:</strong> ${d.reply_draft}</div>
-                            <div class="text-[10px] text-slate-500">Parent URN: ${d.parent_comment_urn || 'Top-level'}</div>
+                            <div class="text-slate-400 italic">"${escapeHtml(d.comment_text)}"</div>
+                            <div class="text-slate-200 bg-dark-900/60 p-2.5 rounded border border-dark-700/50 flex items-start justify-between gap-2">
+                                <div class="flex-1"><strong>Reply:</strong> ${escapeHtml(d.reply_draft)}</div>
+                                <button id="btn-copy-reply-${idx}" onclick="copyCommentReply('${escapeHtml(d.reply_draft).replace(/'/g, "\\'")}', 'btn-copy-reply-${idx}')" class="px-2 py-1 bg-dark-700 hover:bg-dark-600 text-blue-400 rounded text-[11px] font-medium shrink-0 flex items-center gap-1 transition">
+                                    <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                                </button>
+                            </div>
+                            <div class="text-[10px] text-slate-500">Parent URN: ${escapeHtml(d.parent_comment_urn || 'Top-level')}</div>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
+        lucide.createIcons();
     } catch (e) {
         resultsContainer.innerHTML = `<div class="text-xs text-rose-400">Sweep error: ${e.message}</div>`;
     }
@@ -760,11 +819,35 @@ async function processDM() {
             </div>
             <div class="text-slate-300 leading-relaxed whitespace-pre-wrap">${data.reply_draft}</div>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="copyCurrentDM()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold">Copy & Send</button>
+                <button onclick="copyCurrentDM()" class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Text
+                </button>
+                <button onclick="sendAutomatedDM('${escapeHtml(data.sender_name).replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i> Send via Browser
+                </button>
             </div>
         `;
+        lucide.createIcons();
     } catch (e) {
         card.innerHTML = `<div class="text-xs text-rose-400">DM error: ${e.message}</div>`;
+    }
+}
+
+async function sendAutomatedDM(recipient) {
+    if (!window.currentDMReply) {
+        alert('No draft reply available.');
+        return;
+    }
+    try {
+        const res = await fetch('/api/inbox/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipient: recipient, message_text: window.currentDMReply })
+        });
+        const data = await res.json();
+        alert(`Status: ${data.status}\n${data.message}`);
+    } catch (e) {
+        alert('Send DM error: ' + e);
     }
 }
 
