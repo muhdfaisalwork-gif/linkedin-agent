@@ -1,4 +1,4 @@
-# 🚀 NexusAgent — Autonomous LinkedIn AI Agent & Studio (2026 Edition)
+# 🚀 LinkedIn Nexus Agent — Autonomous AI Agent & Studio (2026 Edition)
 
 <p align="center">
   <img src="https://img.shields.io/badge/LinkedIn_Skills-12_Integrated-0A66C2?logo=linkedin&logoColor=white" alt="12 LinkedIn Skills">
@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Brain-Cognitive_Evolution-F59E0B" alt="Cognitive Brain">
 </p>
 
-**NexusAgent** is a production-grade, open-source, autonomous LinkedIn Agent Studio equipped with an evolving **Cognitive Brain**, **12 specialized LinkedIn marketing skills** (based on `sergebulaev/linkedin-skills`), an interactive **Performance Dashboard**, and strict adherence to the **82-Rule Human-Natural Writing Master Prompt**.
+**LinkedIn Nexus Agent** is a production-grade, open-source, autonomous LinkedIn Agent Studio equipped with an evolving **Cognitive Brain**, **12 specialized LinkedIn marketing skills** (based on `sergebulaev/linkedin-skills`), an interactive **Performance Dashboard**, and strict adherence to the **82-Rule Human-Natural Writing Master Prompt**.
 
 ---
 

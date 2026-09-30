@@ -26,7 +26,7 @@ def open_browser(port: int):
 
 def main():
     print("=" * 65)
-    print("  [NexusAgent] Autonomous LinkedIn AI Studio & Dashboard")
+    print("  [LinkedIn Nexus Agent] Autonomous AI Studio & Dashboard")
     print("  [Brain] Cognitive Brain: Story Bank, Voice Profile & Heuristics")
     print("  [Engine] Writing Engine: 82-Rule Strict Human-Natural Gate")
     print("=" * 65)
@@ -43,7 +43,7 @@ def main():
     print(f"\n[2/3] Launching Web Dashboard at http://localhost:{port}...")
     threading.Thread(target=open_browser, args=(port,), daemon=True).start()
 
-    print("\n[3/3] Starting NexusAgent Studio Server...")
+    print("\n[3/3] Starting LinkedIn Nexus Agent Studio Server...")
     uvicorn.run("api.app:app", host=host, port=port, log_level="info", reload=False)
 
 if __name__ == "__main__":

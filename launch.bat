@@ -1,9 +1,9 @@
 @echo off
-title NexusAgent - Autonomous LinkedIn Studio Launcher
+title LinkedIn Nexus Agent - Autonomous Studio Launcher
 cls
 
 echo ===================================================================
-echo   NEXUSAGENT: AUTONOMOUS LINKEDIN STUDIO LAUNCHER
+echo   LINKEDIN NEXUS AGENT: AUTONOMOUS STUDIO LAUNCHER
 echo ===================================================================
 echo.
 
@@ -30,7 +30,7 @@ REM Check if uv is available
 where uv >nul 2>nul
 if %errorlevel% equ 0 (
     echo [OK] Detected 'uv' fast package manager.
-    echo Launching NexusAgent...
+    echo Launching LinkedIn Nexus Agent...
     uv run run.py
     pause
     exit /b

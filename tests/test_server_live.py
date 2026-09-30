@@ -22,7 +22,7 @@ def test_endpoints():
         # 1. Test Dashboard HTML
         r = requests.get(f"{base}/")
         assert r.status_code == 200
-        assert "NexusAgent" in r.text
+        assert "LinkedIn Nexus Agent" in r.text
         print("[OK] GET / (Dashboard HTML served)")
 
         # 2. Test Settings

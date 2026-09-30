@@ -51,8 +51,8 @@ class OpenRouterClient:
         key = self.api_key or ""
         return {
             "Authorization": f"Bearer {key}",
-            "HTTP-Referer": "https://github.com/nexus-linkedin-agent",
-            "X-Title": "NexusAgent LinkedIn Studio",
+            "HTTP-Referer": "https://github.com/muhdfaisalwork-gif/linkedin-agent",
+            "X-Title": "LinkedIn Nexus Agent Studio",
             "Content-Type": "application/json"
         }
 

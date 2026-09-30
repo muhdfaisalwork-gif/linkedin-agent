@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     runner.stop()
 
 app = FastAPI(
-    title="NexusAgent - Autonomous LinkedIn Studio",
+    title="LinkedIn Nexus Agent - Autonomous Studio",
     description="Open-Source Autonomous LinkedIn Agent with Evolving Brain and 82-Rule Writing Engine",
     version="1.0.0",
     lifespan=lifespan
@@ -74,4 +74,4 @@ def serve_dashboard():
     index_file = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
-    return {"message": "NexusAgent Studio API running. Open /static/index.html"}
+    return {"message": "LinkedIn Nexus Agent Studio API running. Open /static/index.html"}

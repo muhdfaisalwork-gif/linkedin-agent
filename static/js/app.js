@@ -1,4 +1,4 @@
-// NexusAgent - Autonomous LinkedIn Studio Application Logic
+// LinkedIn Nexus Agent - Autonomous LinkedIn Studio Application Logic
 
 let currentPostDraft = null;
 let currentProfileDraft = null;
