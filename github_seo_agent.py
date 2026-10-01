@@ -22,6 +22,25 @@ if hasattr(sys.stdout, "reconfigure"):
 from core.seo_engine import GitHubSEOAgent
 
 
+# Automatically load .env if present
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(env_path):
+    try:
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k, v = k.strip(), v.strip().strip('"').strip("'")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+    except Exception:
+        pass
+
+DEFAULT_OWNER = os.getenv("REPO_OWNER", "owner")
+DEFAULT_NAME = os.getenv("REPO_NAME", "repo")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="🔍 GitHub SEO Agent — Open-Source Repository Discoverability Engine"
@@ -31,8 +50,8 @@ def main():
     # audit
     audit_p = subparsers.add_parser("audit", help="Run SEO audit on a repository")
     audit_p.add_argument("--repo-dir", default=".", help="Path to repository root (default: current directory)")
-    audit_p.add_argument("--owner", default="owner", help="GitHub repo owner")
-    audit_p.add_argument("--name", default="repo", help="GitHub repo name")
+    audit_p.add_argument("--owner", default=DEFAULT_OWNER, help="GitHub repo owner")
+    audit_p.add_argument("--name", default=DEFAULT_NAME, help="GitHub repo name")
 
     # readme
     readme_p = subparsers.add_parser("readme", help="Generate optimized README template")
@@ -42,8 +61,8 @@ def main():
     readme_p.add_argument("--tech-stack", default="", help="Comma-separated technologies")
     readme_p.add_argument("--apply", action="store_true", help="Write README.md to disk")
     readme_p.add_argument("--repo-dir", default=".")
-    readme_p.add_argument("--owner", default="owner")
-    readme_p.add_argument("--name", default="repo")
+    readme_p.add_argument("--owner", default=DEFAULT_OWNER)
+    readme_p.add_argument("--name", default=DEFAULT_NAME)
 
     # launch
     launch_p = subparsers.add_parser("launch", help="Generate multi-channel launch copy")
@@ -52,15 +71,15 @@ def main():
     launch_p.add_argument("--ai", action="store_true", help="Use OpenRouter free models (Gemma 4 / Nemotron)")
     launch_p.add_argument("--angle", default="", help="Custom strategic angle")
     launch_p.add_argument("--model", default=None, help="OpenRouter model ID")
-    launch_p.add_argument("--owner", default="owner")
-    launch_p.add_argument("--name", default="repo")
+    launch_p.add_argument("--owner", default=DEFAULT_OWNER)
+    launch_p.add_argument("--name", default=DEFAULT_NAME)
 
     # community
     comm_p = subparsers.add_parser("community", help="Generate GitHub Community Standards files")
     comm_p.add_argument("--apply", action="store_true", help="Write files to disk")
     comm_p.add_argument("--repo-dir", default=".")
-    comm_p.add_argument("--owner", default="owner")
-    comm_p.add_argument("--name", default="repo")
+    comm_p.add_argument("--owner", default=DEFAULT_OWNER)
+    comm_p.add_argument("--name", default=DEFAULT_NAME)
 
     # mcp
     subparsers.add_parser("mcp", help="Start MCP stdio server")

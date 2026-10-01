@@ -126,7 +126,7 @@ class GitHubSEOMCPServer:
         elif method == "tools/call":
             params = req.get("params", {})
             name = params.get("name")
-            arguments = params.get("arguments", {})
+            arguments = params.get("arguments") or {}
             try:
                 result_text = self.execute_tool(name, arguments)
                 return {

@@ -43,34 +43,47 @@ class GitHubSEOAgent:
             readme_path = os.path.join(self.repo_dir, 'README.md')
             if os.path.exists(readme_path):
                 has_readme = True
-                with open(readme_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    if len(content.encode('utf-8')) > 500:
-                        readme_rich = True
-                    
-                    badges = re.findall(r'img\.shields\.io', content)
-                    if len(badges) >= 4:
-                        has_badges = True
+                try:
+                    with open(readme_path, 'r', encoding='utf-8', errors='replace') as f:
+                        content = f.read()
+                        if len(content.encode('utf-8')) > 500:
+                            readme_rich = True
                         
-                    if 'vs' in content.lower() or 'comparison' in content.lower() or 'competitor' in content.lower():
-                        has_comparison = True
+                        badges = re.findall(r'img\.shields\.io', content)
+                        if len(badges) >= 4:
+                            has_badges = True
+                            
+                        if 'vs' in content.lower() or 'comparison' in content.lower() or 'competitor' in content.lower():
+                            has_comparison = True
+                except Exception:
+                    pass
 
             workflows_dir = os.path.join(self.repo_dir, '.github', 'workflows')
-            if os.path.exists(workflows_dir) and any(f.endswith('.yml') for f in os.listdir(workflows_dir)):
-                has_ci = True
+            if os.path.exists(workflows_dir) and os.path.isdir(workflows_dir):
+                try:
+                    if any(f.lower().endswith(('.yml', '.yaml')) for f in os.listdir(workflows_dir)):
+                        has_ci = True
+                except Exception:
+                    pass
                 
             issue_template_dir = os.path.join(self.repo_dir, '.github', 'ISSUE_TEMPLATE')
-            if os.path.exists(issue_template_dir) and len(os.listdir(issue_template_dir)) > 0:
-                has_issue_templates = True
+            if os.path.exists(issue_template_dir) and os.path.isdir(issue_template_dir):
+                try:
+                    if len(os.listdir(issue_template_dir)) > 0:
+                        has_issue_templates = True
+                except Exception:
+                    pass
                 
-            if os.path.exists(os.path.join(self.repo_dir, 'CONTRIBUTING.md')):
-                has_contributing = True
-                
-            if os.path.exists(os.path.join(self.repo_dir, 'SECURITY.md')):
-                has_security = True
-                
-            if os.path.exists(os.path.join(self.repo_dir, 'LICENSE')) or os.path.exists(os.path.join(self.repo_dir, 'LICENSE.md')):
-                has_license = True
+            try:
+                root_files = [f.lower() for f in os.listdir(self.repo_dir)]
+                if any(f.startswith('contributing') for f in root_files):
+                    has_contributing = True
+                if any(f.startswith('security') for f in root_files):
+                    has_security = True
+                if any(f.startswith('license') for f in root_files):
+                    has_license = True
+            except Exception:
+                pass
 
         if has_readme: score += 10; checklist.append('README.md exists')
         if readme_rich: score += 15; checklist.append('README.md is rich (>500 bytes)')

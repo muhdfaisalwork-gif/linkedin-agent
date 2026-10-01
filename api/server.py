@@ -104,16 +104,37 @@ def generate_launch(req: LaunchRequest):
 
 @app.post("/api/ai-launch")
 def ai_synthesized_launch(req: AILaunchRequest):
-    """Generates AI-crafted launch copy using OpenRouter free models."""
+    """Generates AI-crafted launch copy using OpenRouter free models, with fallback to curated template."""
     try:
         from core.ai_synthesizer import AISynthesizer
         synth = AISynthesizer(model=req.model or "google/gemma-4-31b-it:free")
         repo_url = req.repo_url or f"https://github.com/{REPO_OWNER}/{REPO_NAME}"
         features = req.features or ["open-source"]
         res = synth.synthesize_launch_copy(repo_url, req.project_name or REPO_NAME, features, req.channel, req.angle or "")
-        return {"status": "success", "channel": req.channel, **res}
+        
+        # If OpenRouter returned an error (e.g. rate limit/timeout), gracefully fallback to curated template
+        if "result" in res and res["result"]:
+            return {"status": "success", "channel": req.channel, "source": "openrouter_ai", "result": res["result"], "model_used": res.get("model_used")}
+        
+        packs = engine.generate_launch_pack(channel=req.channel)
+        fallback_text = packs.get(req.channel) or list(packs.values())[0]
+        return {
+            "status": "success",
+            "channel": req.channel,
+            "source": "curated_fallback",
+            "result": fallback_text,
+            "note": f"Served via curated launch pack (AI fallback: {res.get('error', 'unknown')})"
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        packs = engine.generate_launch_pack(channel=req.channel)
+        fallback_text = packs.get(req.channel) or list(packs.values())[0]
+        return {
+            "status": "success",
+            "channel": req.channel,
+            "source": "curated_fallback",
+            "result": fallback_text,
+            "note": f"Served via curated launch pack (Exception: {str(e)})"
+        }
 
 @app.post("/api/community")
 def install_community(req: CommunityRequest):

@@ -202,3 +202,37 @@ def test_api_root_serves_html():
     res = client.get("/")
     assert res.status_code == 200
     assert "GitHub SEO Agent" in res.text
+
+def test_mcp_call_with_null_arguments():
+    server = GitHubSEOMCPServer()
+    resp = server.handle_request({
+        "jsonrpc": "2.0", "id": 5, "method": "tools/call",
+        "params": {"name": "generate_community_files", "arguments": None}
+    })
+    assert "result" in resp
+    assert "Community" in resp["result"]["content"][0]["text"]
+
+def test_engine_yaml_workflow_and_case_insensitive_license(tmp_path):
+    # Setup a repo dir with ci.yaml and lowercase license
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "ci.yaml").write_text("name: Test")
+    (tmp_path / "license.txt").write_text("MIT")
+    (tmp_path / "README.md").write_text("# Project\n" + "rich text " * 60)
+
+    engine = GitHubSEOAgent("test", "test", repo_dir=str(tmp_path))
+    audit = engine.audit_repository()
+    assert "GitHub Actions CI workflow exists" in audit["checklist"]
+    assert "LICENSE file exists" in audit["checklist"]
+
+def test_api_ai_launch_fallback():
+    from api.server import app
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+    with patch("core.ai_synthesizer.AISynthesizer.synthesize_launch_copy", return_value={"error": "Rate limit 429"}):
+        res = client.post("/api/ai-launch", json={"channel": "hacker_news"})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "success"
+        assert data["source"] == "curated_fallback"
+        assert "Show HN" in data["result"]
