@@ -221,14 +221,15 @@ class LinkedInNexusMCPServer:
             context = arguments.get("post_context", "")
             comment = arguments.get("comment_text", "")
             author = arguments.get("author_name", "LinkedIn Member")
-            res = self.comment_drafter.draft_reply(
-                post_content=context,
+            res = self.reply_handler.draft_reply(
+                original_post=context,
                 comment_text=comment,
-                author_name=author
+                commenter_name=author
             )
+            reply_str = res.get("reply_draft") or res.get("reply_text") or ""
             return (
                 f"### Suggested Reply for {author}:\n\n"
-                f"{res.get('reply_text', '')}\n\n"
+                f"{reply_str}\n\n"
                 f"**Intent**: {res.get('intent', 'general')}\n"
                 f"**Reaction**: {res.get('suggested_reaction', 'LIKE')}"
             )
@@ -251,8 +252,8 @@ class LinkedInNexusMCPServer:
             return "\n".join(lines)
 
         elif tool_name == "publish_linkedin_post":
-            from core.linkedin.dispatcher import PostDispatcher
-            dispatcher = PostDispatcher(self.browser_agent)
+            from core.linkedin.dispatcher import LinkedInDispatcher
+            dispatcher = LinkedInDispatcher(browser_agent=self.browser_agent)
             content = arguments.get("content", "")
             image_path = arguments.get("image_path")
             res = dispatcher.publish_now(content=content, image_path=image_path)

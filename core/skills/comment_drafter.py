@@ -43,3 +43,19 @@ CRITICAL RULES:
             "char_count": len(cleaned_comment),
             "audit": audit
         }
+
+    def draft_reply(
+        self,
+        post_content: str,
+        comment_text: str,
+        author_name: str = "LinkedIn Member"
+    ) -> Dict[str, Any]:
+        """Convenience method delegating to ReplyHandler."""
+        from core.skills.reply_handler import ReplyHandler
+        handler = ReplyHandler(self.llm, self.brain)
+        return handler.draft_reply(
+            original_post=post_content,
+            comment_text=comment_text,
+            commenter_name=author_name
+        )
+

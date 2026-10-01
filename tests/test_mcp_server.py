@@ -177,3 +177,49 @@ def test_mcp_http_endpoints():
     assert res_tools.status_code == 200
     assert res_tools.json()["id"] == 101
     assert "tools" in res_tools.json()["result"]
+
+def test_mcp_call_reply_to_comment_mocked(mcp_server):
+    with patch.object(mcp_server.reply_handler, "draft_reply") as mock_reply:
+        mock_reply.return_value = {
+            "reply_draft": "We saw order queue times drop by 60% after switching to lock-free buffers.",
+            "suggested_reaction": "LIKE",
+            "intent": "technical_insight"
+        }
+        req = {
+            "jsonrpc": "2.0",
+            "id": 102,
+            "method": "tools/call",
+            "params": {
+                "name": "reply_to_comment",
+                "arguments": {
+                    "post_context": "Trading systems latency",
+                    "comment_text": "Did you measure the GC pause impact?",
+                    "author_name": "Devin C."
+                }
+            }
+        }
+        res = mcp_server.handle_request(req)
+        assert "result" in res
+        text = res["result"]["content"][0]["text"]
+        assert "Suggested Reply for Devin C." in text
+        assert "lock-free buffers" in text
+        assert "LIKE" in text
+
+def test_mcp_call_publish_linkedin_post(mcp_server):
+    req = {
+        "jsonrpc": "2.0",
+        "id": 103,
+        "method": "tools/call",
+        "params": {
+            "name": "publish_linkedin_post",
+            "arguments": {
+                "content": "Test post for MCP publishing",
+                "image_path": None
+            }
+        }
+    }
+    res = mcp_server.handle_request(req)
+    assert "result" in res
+    text = res["result"]["content"][0]["text"]
+    assert "Publish Status" in text
+

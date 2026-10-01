@@ -1028,9 +1028,12 @@ async function loadSettings() {
         const customModelInput = document.getElementById('setting-custom-model-name');
         if (customModelInput && data.custom_model) customModelInput.value = data.custom_model;
 
-        // Mode selector
+        // Mode and Vision selector
         const modeSelect = document.getElementById('setting-mode');
         if (modeSelect && data.execution_mode) modeSelect.value = data.execution_mode;
+        const visionSelect = document.getElementById('setting-vision-model');
+        if (visionSelect && data.vision_model) visionSelect.value = data.vision_model;
+
 
         // Active model badge in sidebar or header
         const activeBadge = document.getElementById('active-model-badge');
@@ -1089,7 +1092,8 @@ async function saveSettings() {
         ollama_model: document.getElementById('setting-ollama-model')?.value,
         ollama_base_url: document.getElementById('setting-ollama-url')?.value?.trim(),
         custom_base_url: document.getElementById('setting-custom-url')?.value?.trim(),
-        custom_model: document.getElementById('setting-custom-model-name')?.value?.trim()
+        custom_model: document.getElementById('setting-custom-model-name')?.value?.trim(),
+        vision_model: document.getElementById('setting-vision-model')?.value
     };
 
     const openrouterKey = document.getElementById('setting-api-key')?.value?.trim();

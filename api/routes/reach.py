@@ -5,15 +5,15 @@ from typing import Dict, Any, Optional, List
 from core.reach.feed_engine import ReachFeedEngine
 from core.linkedin.browser_agent import LinkedInBrowserAgent
 from core.reach.vision_analyzer import ReachVisionAnalyzer
-from core.llm.client import OpenRouterClient
+from core.llm.client import UniversalLLMClient
 from core.brain.brain import BrainManager
 
 router = APIRouter(prefix="/api/reach", tags=["reach"])
 
 browser_agent = LinkedInBrowserAgent()
 feed_engine = ReachFeedEngine(browser_agent=browser_agent)
-vision_analyzer = ReachVisionAnalyzer()
-llm = OpenRouterClient()
+llm = UniversalLLMClient()
+vision_analyzer = ReachVisionAnalyzer(llm_client=llm)
 brain = BrainManager()
 
 class InspectRequest(BaseModel):
@@ -43,7 +43,11 @@ def inspect_url(req: InspectRequest):
     Inspects any URL (LinkedIn profile, post, or article) via dual-backend
     (Jina Reader + Browser DOM) and generates strategic founder commentary angles.
     """
-    res = feed_engine.inspect_url(req.url)
+    clean_url = (req.url or "").strip()
+    if not clean_url or clean_url.lower() in ("http://", "https://"):
+        return {"status": "error", "message": "A valid URL is required for inspection."}
+
+    res = feed_engine.inspect_url(clean_url)
     if res.get("status") != "success":
         return res
 

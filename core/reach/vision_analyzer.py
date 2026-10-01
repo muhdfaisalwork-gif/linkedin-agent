@@ -3,7 +3,7 @@ import base64
 import json
 import requests
 from typing import Dict, Any, Optional
-from core.llm.client import UniversalLLMClient, OpenRouterClient
+from core.llm.client import UniversalLLMClient, OpenRouterClient, _get_db_setting
 
 class ReachVisionAnalyzer:
     """
@@ -47,7 +47,7 @@ class ReachVisionAnalyzer:
         )
 
         provider = self.llm.active_provider_name
-        vision_model = os.getenv("VISION_MODEL")
+        vision_model = os.getenv("VISION_MODEL") or _get_db_setting("VISION_MODEL")
 
         try:
             # 1. Local Ollama Routing

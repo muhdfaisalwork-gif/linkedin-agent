@@ -28,6 +28,7 @@ class SettingsUpdateRequest(BaseModel):
     execution_mode: Optional[str] = None
     publora_api_key: Optional[str] = None
     linkedin_platform_id: Optional[str] = None
+    vision_model: Optional[str] = None
 
 class CookieConnectRequest(BaseModel):
     cookie: str
@@ -51,6 +52,7 @@ def get_settings():
     custom_base_url = os.getenv("CUSTOM_BASE_URL") or db_settings.get("CUSTOM_BASE_URL", "http://localhost:1234/v1")
     custom_model = os.getenv("CUSTOM_MODEL") or db_settings.get("CUSTOM_MODEL", "local-model")
     exec_mode = os.getenv("LINKEDIN_EXECUTION_MODE") or db_settings.get("LINKEDIN_EXECUTION_MODE", "manual")
+    vision_model = os.getenv("VISION_MODEL") or db_settings.get("VISION_MODEL", "qwen2.5-vl")
 
     auth_file = os.path.join(browser_agent.user_data_dir, ".authenticated")
     auth_method = "unknown"
@@ -87,6 +89,7 @@ def get_settings():
         "custom_base_url": custom_base_url,
         "custom_api_key_set": bool(os.getenv("CUSTOM_API_KEY") or db_settings.get("CUSTOM_API_KEY")),
         "custom_model": custom_model,
+        "vision_model": vision_model,
         "available_free_models": llm.get_available_free_models(),
         "execution_mode": exec_mode,
         "browser_authenticated": browser_agent.is_authenticated(),
@@ -173,6 +176,9 @@ def update_settings(req: SettingsUpdateRequest):
     if req.linkedin_platform_id:
         os.environ["LINKEDIN_PLATFORM_ID"] = req.linkedin_platform_id
         updates["LINKEDIN_PLATFORM_ID"] = req.linkedin_platform_id
+    if req.vision_model:
+        os.environ["VISION_MODEL"] = req.vision_model
+        updates["VISION_MODEL"] = req.vision_model
 
     for k, v in updates.items():
         cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (k, v))

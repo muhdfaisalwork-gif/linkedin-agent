@@ -131,3 +131,42 @@ def test_reach_vision_analyzer():
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+def test_reach_reader_empty_url_validation():
+    reader = ReachReader()
+    res1 = reader.read_url("")
+    assert res1["status"] == "error"
+    assert "valid URL" in res1["message"]
+
+    res2 = reader.read_url("   ")
+    assert res2["status"] == "error"
+
+    res3 = reader.read_url("https://")
+    assert res3["status"] == "error"
+
+def test_reach_inspect_empty_url_endpoint():
+    res = client.post("/api/reach/inspect", json={"url": ""})
+    assert res.status_code == 200
+    assert res.json()["status"] == "error"
+    assert "valid URL" in res.json()["message"]
+
+def test_settings_vision_model_persistence():
+    # Save vision model
+    res_save = client.post("/api/settings", json={"vision_model": "llama3.2-vision:latest"})
+    assert res_save.status_code == 200
+    assert res_save.json()["status"] == "saved"
+
+    # Get settings
+    res_get = client.get("/api/settings")
+    assert res_get.status_code == 200
+    assert res_get.json()["vision_model"] == "llama3.2-vision:latest"
+
+def test_feed_engine_safe_metric_parsing():
+    from core.reach.feed_engine import _parse_metric_count
+    assert _parse_metric_count(None) == 0
+    assert _parse_metric_count("") == 0
+    assert _parse_metric_count("   ") == 0
+    assert _parse_metric_count("42") == 42
+    assert _parse_metric_count("1,250 reactions") == 1250
+    assert _parse_metric_count("invalid string") == 0
+

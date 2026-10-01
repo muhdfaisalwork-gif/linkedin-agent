@@ -21,7 +21,13 @@ class ReachReader:
         Tries Jina Reader first for fast, lightweight Markdown extraction.
         Falls back to Playwright headless browser for JavaScript-heavy or login-protected pages.
         """
-        url = url.strip()
+        url = (url or "").strip()
+        if not url or url.lower() in ("http://", "https://"):
+            return {
+                "status": "error",
+                "url": url,
+                "message": "A valid URL is required."
+            }
         if not url.startswith("http://") and not url.startswith("https://"):
             url = f"https://{url}"
 

@@ -6,9 +6,13 @@ from .publora_client import PubloraClient
 class LinkedInDispatcher:
     """Dispatches publishing and profile update actions to the configured backend."""
 
-    def __init__(self):
-        self.browser_agent = LinkedInBrowserAgent()
-        self.publora = PubloraClient()
+    def __init__(
+        self,
+        browser_agent: Optional[LinkedInBrowserAgent] = None,
+        publora: Optional[PubloraClient] = None
+    ):
+        self.browser_agent = browser_agent or LinkedInBrowserAgent()
+        self.publora = publora or PubloraClient()
 
     def get_active_backend(self) -> str:
         mode = os.getenv("LINKEDIN_EXECUTION_MODE")
@@ -104,3 +108,11 @@ class LinkedInDispatcher:
             "message": "Direct message drafted and copied to clipboard.",
             "recipient": recipient
         }
+
+    def publish_now(self, content: str, image_path: Optional[str] = None) -> Dict[str, Any]:
+        """Convenience alias for MCP and external clients."""
+        return self.publish_post(content=content, image_url=image_path)
+
+# Backwards compatibility alias for MCP and external tooling
+PostDispatcher = LinkedInDispatcher
+

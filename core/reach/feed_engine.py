@@ -7,6 +7,15 @@ from core.linkedin.browser_agent import LinkedInBrowserAgent
 from core.reach.vision_analyzer import ReachVisionAnalyzer
 from core.reach.reader import ReachReader
 
+def _parse_metric_count(val: Any) -> int:
+    try:
+        parts = str(val or 0).replace(",", "").split()
+        if parts and parts[0].isdigit():
+            return int(parts[0])
+    except Exception:
+        pass
+    return 0
+
 class ReachFeedEngine:
     """
     Coordinates Agent Reach visual scanning, feed monitoring, post grounding,
@@ -46,8 +55,8 @@ class ReachFeedEngine:
             headline = p.get("author_headline", "")
             text = p.get("post_text", "")
             urn = p.get("post_urn", "")
-            reactions = int(str(p.get("reaction_count", 0)).replace(",", "").split()[0]) if str(p.get("reaction_count", 0)).replace(",", "").split()[0].isdigit() else 0
-            comments = int(str(p.get("comment_count", 0)).replace(",", "").split()[0]) if str(p.get("comment_count", 0)).replace(",", "").split()[0].isdigit() else 0
+            reactions = _parse_metric_count(p.get("reaction_count", 0))
+            comments = _parse_metric_count(p.get("comment_count", 0))
 
             # Avoid duplicates within recent scans
             cursor.execute(
