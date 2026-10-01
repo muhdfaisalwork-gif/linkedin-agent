@@ -871,7 +871,7 @@ async function generatePlan() {
     }
 }
 
-// 8. SETTINGS
+// 8. SETTINGS & MULTI-PROVIDER ENGINE
 function checkCustomModelVisibility() {
     const modelSelect = document.getElementById('setting-model');
     const customContainer = document.getElementById('custom-model-container');
@@ -884,12 +884,89 @@ function checkCustomModelVisibility() {
     }
 }
 
+function onProviderChanged() {
+    const providerSelect = document.getElementById('setting-provider');
+    const prov = providerSelect ? providerSelect.value : 'openrouter';
+
+    // Hide all provider panels
+    document.querySelectorAll('.provider-panel').forEach(el => el.classList.add('hidden'));
+
+    // Show active panel
+    const targetPanel = document.getElementById(`panel-provider-${prov}`);
+    if (targetPanel) targetPanel.classList.remove('hidden');
+
+    // Update status badge
+    const badge = document.getElementById('provider-status-badge');
+    if (badge) {
+        const labels = {
+            'ollama': 'Ollama (Local)',
+            'openrouter': 'OpenRouter',
+            'openai': 'Direct OpenAI',
+            'anthropic': 'Direct Anthropic',
+            'gemini': 'Direct Gemini',
+            'custom': 'Custom Endpoint'
+        };
+        badge.innerText = labels[prov] || prov.toUpperCase();
+    }
+
+    if (prov === 'ollama') {
+        refreshOllamaModels();
+    }
+}
+
+async function refreshOllamaModels() {
+    const statusEl = document.getElementById('ollama-live-status');
+    const modelSelect = document.getElementById('setting-ollama-model');
+    const baseUrlInput = document.getElementById('setting-ollama-url');
+    const baseUrl = baseUrlInput ? baseUrlInput.value.trim() : 'http://localhost:11434';
+
+    if (statusEl) statusEl.innerText = 'Probing local daemon...';
+
+    try {
+        const res = await fetch(`/api/settings/ollama-models?base_url=${encodeURIComponent(baseUrl)}`);
+        const data = await res.json();
+
+        if (data.connected && data.models && data.models.length > 0) {
+            if (statusEl) {
+                statusEl.innerText = `✓ Connected (${data.count} models available)`;
+                statusEl.className = 'text-[11px] font-mono text-emerald-400';
+            }
+            if (modelSelect) {
+                const currentVal = modelSelect.value;
+                modelSelect.innerHTML = data.models.map(m => `
+                    <option value="${escapeHtml(m)}">${escapeHtml(m)}</option>
+                `).join('');
+                if (currentVal && data.models.includes(currentVal)) {
+                    modelSelect.value = currentVal;
+                }
+            }
+        } else {
+            if (statusEl) {
+                statusEl.innerText = '⚠️ Offline / No models found';
+                statusEl.className = 'text-[11px] font-mono text-amber-400';
+            }
+        }
+    } catch (e) {
+        if (statusEl) {
+            statusEl.innerText = '⚠️ Cannot reach daemon';
+            statusEl.className = 'text-[11px] font-mono text-rose-400';
+        }
+    }
+}
+
 async function loadSettings() {
     try {
         const res = await fetch('/api/settings');
         const data = await res.json();
 
-        // Model selector
+        // Active Provider
+        const provSelect = document.getElementById('setting-provider');
+        if (provSelect && data.llm_provider) {
+            provSelect.value = data.llm_provider;
+            onProviderChanged();
+        }
+
+        // OpenRouter Model selector
         const modelSelect = document.getElementById('setting-model');
         const customContainer = document.getElementById('custom-model-container');
         const customInput = document.getElementById('setting-custom-model');
@@ -907,28 +984,70 @@ async function loadSettings() {
             }
         }
 
+        // OpenAI Model
+        const openaiModelSelect = document.getElementById('setting-openai-model');
+        if (openaiModelSelect && data.openai_model) openaiModelSelect.value = data.openai_model;
+        const openaiKeyStatus = document.getElementById('openai-key-status');
+        if (openaiKeyStatus) {
+            openaiKeyStatus.innerText = data.openai_api_key_set ? '✓ Key Active' : 'Not Set';
+            openaiKeyStatus.className = data.openai_api_key_set ? 'text-[11px] font-mono text-emerald-400' : 'text-[11px] font-mono text-slate-400';
+        }
+
+        // Anthropic Model
+        const anthropicModelSelect = document.getElementById('setting-anthropic-model');
+        if (anthropicModelSelect && data.anthropic_model) anthropicModelSelect.value = data.anthropic_model;
+        const anthropicKeyStatus = document.getElementById('anthropic-key-status');
+        if (anthropicKeyStatus) {
+            anthropicKeyStatus.innerText = data.anthropic_api_key_set ? '✓ Key Active' : 'Not Set';
+            anthropicKeyStatus.className = data.anthropic_api_key_set ? 'text-[11px] font-mono text-emerald-400' : 'text-[11px] font-mono text-slate-400';
+        }
+
+        // Gemini Model
+        const geminiModelSelect = document.getElementById('setting-gemini-model');
+        if (geminiModelSelect && data.gemini_model) geminiModelSelect.value = data.gemini_model;
+        const geminiKeyStatus = document.getElementById('gemini-key-status');
+        if (geminiKeyStatus) {
+            geminiKeyStatus.innerText = data.gemini_api_key_set ? '✓ Key Active' : 'Not Set';
+            geminiKeyStatus.className = data.gemini_api_key_set ? 'text-[11px] font-mono text-emerald-400' : 'text-[11px] font-mono text-slate-400';
+        }
+
+        // Ollama Settings
+        const ollamaUrlInput = document.getElementById('setting-ollama-url');
+        if (ollamaUrlInput && data.ollama_base_url) ollamaUrlInput.value = data.ollama_base_url;
+        const ollamaModelSelect = document.getElementById('setting-ollama-model');
+        if (ollamaModelSelect && data.ollama_models && data.ollama_models.length > 0) {
+            ollamaModelSelect.innerHTML = data.ollama_models.map(m => `
+                <option value="${escapeHtml(m)}">${escapeHtml(m)}</option>
+            `).join('');
+            if (data.ollama_model) ollamaModelSelect.value = data.ollama_model;
+        }
+
+        // Custom Settings
+        const customUrlInput = document.getElementById('setting-custom-url');
+        if (customUrlInput && data.custom_base_url) customUrlInput.value = data.custom_base_url;
+        const customModelInput = document.getElementById('setting-custom-model-name');
+        if (customModelInput && data.custom_model) customModelInput.value = data.custom_model;
+
         // Mode selector
         const modeSelect = document.getElementById('setting-mode');
-        if (modeSelect && data.execution_mode) {
-            modeSelect.value = data.execution_mode;
-        }
+        if (modeSelect && data.execution_mode) modeSelect.value = data.execution_mode;
 
         // Active model badge in sidebar or header
         const activeBadge = document.getElementById('active-model-badge');
-        if (activeBadge && data.openrouter_model) {
-            activeBadge.innerText = data.openrouter_model.split('/').pop().replace(':free', '');
+        if (activeBadge) {
+            const activeM = data.llm_provider === 'ollama' ? (data.ollama_model || 'ollama') :
+                            data.llm_provider === 'openai' ? (data.openai_model || 'openai') :
+                            data.llm_provider === 'anthropic' ? (data.anthropic_model || 'claude') :
+                            data.llm_provider === 'gemini' ? (data.gemini_model || 'gemini') :
+                            (data.openrouter_model ? data.openrouter_model.split('/').pop().replace(':free', '') : 'openrouter');
+            activeBadge.innerText = `${data.llm_provider}: ${activeM}`;
         }
 
-        // API Key status
+        // API Key status for OpenRouter
         const apiKeyStatus = document.getElementById('api-key-status');
         if (apiKeyStatus) {
-            if (data.openrouter_api_key_set) {
-                apiKeyStatus.innerText = '✓ Key Active';
-                apiKeyStatus.className = 'text-[11px] font-mono text-emerald-400';
-            } else {
-                apiKeyStatus.innerText = '⚠️ Key Missing';
-                apiKeyStatus.className = 'text-[11px] font-mono text-amber-400';
-            }
+            apiKeyStatus.innerText = data.openrouter_api_key_set ? '✓ Key Active' : '⚠️ Key Missing';
+            apiKeyStatus.className = data.openrouter_api_key_set ? 'text-[11px] font-mono text-emerald-400' : 'text-[11px] font-mono text-amber-400';
         }
 
         // Browser Authentication Status & Method
@@ -952,17 +1071,41 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-    let model = document.getElementById('setting-model').value;
-    if (model === 'custom') {
+    const provider = document.getElementById('setting-provider')?.value || 'openrouter';
+
+    let openrouterModel = document.getElementById('setting-model')?.value;
+    if (openrouterModel === 'custom') {
         const customVal = document.getElementById('setting-custom-model')?.value?.trim();
-        if (customVal) model = customVal;
+        if (customVal) openrouterModel = customVal;
     }
 
-    const mode = document.getElementById('setting-mode').value;
-    const apiKey = document.getElementById('setting-api-key')?.value?.trim();
+    const payload = {
+        llm_provider: provider,
+        execution_mode: document.getElementById('setting-mode')?.value || 'manual',
+        openrouter_model: openrouterModel,
+        openai_model: document.getElementById('setting-openai-model')?.value,
+        anthropic_model: document.getElementById('setting-anthropic-model')?.value,
+        gemini_model: document.getElementById('setting-gemini-model')?.value,
+        ollama_model: document.getElementById('setting-ollama-model')?.value,
+        ollama_base_url: document.getElementById('setting-ollama-url')?.value?.trim(),
+        custom_base_url: document.getElementById('setting-custom-url')?.value?.trim(),
+        custom_model: document.getElementById('setting-custom-model-name')?.value?.trim()
+    };
 
-    const payload = { openrouter_model: model, execution_mode: mode };
-    if (apiKey) payload.openrouter_api_key = apiKey;
+    const openrouterKey = document.getElementById('setting-api-key')?.value?.trim();
+    if (openrouterKey) payload.openrouter_api_key = openrouterKey;
+
+    const openaiKey = document.getElementById('setting-openai-key')?.value?.trim();
+    if (openaiKey) payload.openai_api_key = openaiKey;
+
+    const anthropicKey = document.getElementById('setting-anthropic-key')?.value?.trim();
+    if (anthropicKey) payload.anthropic_api_key = anthropicKey;
+
+    const geminiKey = document.getElementById('setting-gemini-key')?.value?.trim();
+    if (geminiKey) payload.gemini_api_key = geminiKey;
+
+    const customKey = document.getElementById('setting-custom-key')?.value?.trim();
+    if (customKey) payload.custom_api_key = customKey;
 
     try {
         const res = await fetch('/api/settings', {
@@ -971,17 +1114,43 @@ async function saveSettings() {
             body: JSON.stringify(payload)
         });
         const data = await res.json();
-        const activeBadge = document.getElementById('active-model-badge');
-        if (activeBadge) activeBadge.innerText = model.split('/').pop().replace(':free', '');
-        if (apiKey) {
-            const keyInput = document.getElementById('setting-api-key');
-            if (keyInput) keyInput.value = '';
-        }
         alert('Settings saved and persisted to database!');
         loadSettings();
     } catch (e) {
         alert('Failed to save settings: ' + e);
     }
+}
+
+// AI Assistant Config Clipboard Helpers
+function copyClaudeDesktopConfig() {
+    const config = {
+        "mcpServers": {
+            "linkedin-nexus": {
+                "command": "python",
+                "args": ["G:\\linkedin agent\\run_mcp.py"]
+            }
+        }
+    };
+    navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+    alert('Copied Claude Desktop configuration to clipboard!\nPaste into your claude_desktop_config.json file.');
+}
+
+function copyCursorConfig() {
+    const config = {
+        "mcpServers": {
+            "linkedin-nexus": {
+                "command": "python",
+                "args": ["G:\\linkedin agent\\run_mcp.py"]
+            }
+        }
+    };
+    navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+    alert('Copied Cursor MCP configuration to clipboard!\nIn Cursor, open Settings -> MCP -> Add new MCP server.');
+}
+
+function copySkillCommand() {
+    navigator.clipboard.writeText("python scripts/install_skill.py");
+    alert('Copied command: "python scripts/install_skill.py"\nRun this command in terminal to register the skill.');
 }
 
 // Direct li_at Cookie Connection (Instant < 1s)

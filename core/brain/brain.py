@@ -16,6 +16,27 @@ class BrainManager:
         conn.close()
         return [dict(r) for r in rows]
 
+    def get_all_stories(self) -> List[Dict[str, Any]]:
+        """Alias for get_story_bank for MCP and external callers."""
+        return self.get_story_bank()
+
+    def get_relevant_stories(self, topic: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Returns list of matching story dicts for MCP and search queries."""
+        stories = self.get_story_bank()
+        if not topic or not stories:
+            return stories[:limit]
+        topic_words = set(topic.lower().split())
+        scored = []
+        for s in stories:
+            score = 0
+            text = f"{s.get('title', '')} {s.get('detail', '')} {s.get('tags', '')} {s.get('category', '')}".lower()
+            for w in topic_words:
+                if len(w) > 3 and w in text:
+                    score += 2
+            scored.append((score, s))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [item[1] for item in scored[:limit]]
+
     def add_story(self, category: str, title: str, detail: str, metrics: str = "", url: str = "", year_or_date: str = "", tags: str = "") -> int:
         conn = get_connection()
         cursor = conn.cursor()

@@ -47,6 +47,7 @@ def list_posts():
     return [dict(r) for r in rows]
 
 @router.post("/generate")
+@router.post("/draft")
 def generate_post(req: GeneratePostRequest):
     try:
         draft = post_writer.draft_post(

@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: LinkedIn Nexus Agent API
+  description: Autonomous LinkedIn Studio with Cognitive Brain, 82-Rule Writing Gate, and Agent Reach Eyes.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local Nexus Agent Server
+paths:
+  /api/posts/draft:
+    post:
+      summary: Draft LinkedIn Post with 82-Rule Humanizer
+      operationId: draftPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+              properties:
+                topic:
+                  type: string
+                  description: Core topic or lesson to write about
+                hook_code:
+                  type: string
+                  description: Hook formula code (e.g. F7 for Contrast/Pivot, F10 for Ledger)
+                  default: F7
+                founder_angle_code:
+                  type: string
+                  description: Founder angle code (e.g. A5 for Architecture, A1 for Anti-Consensus)
+                  default: A5
+                target_length:
+                  type: string
+                  enum: [short, medium, long]
+                  default: medium
+                visual_type:
+                  type: string
+                  enum: [none, quote_card, ledger_table, receipt_screenshot, polaroid_diagram]
+                  default: none
+      responses:
+        '200':
+          description: Drafted post with Flesch-Kincaid audit compliance score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  topic:
+                    type: string
+                  content:
+                    type: string
+                  hook_formula:
+                    type: string
+                  founder_angle:
+                    type: string
+                  flesch_score:
+                    type: number
+                  image_url:
+                    type: string
+
+  /api/posts/humanize:
+    post:
+      summary: Scrub AI Buzzwords and Audit Text against 82 Humanizer Rules
+      operationId: humanizePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Draft text to scrub of buzzwords and audit
+      responses:
+        '200':
+          description: Humanized text with audit metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  humanized_text:
+                    type: string
+                  is_compliant:
+                    type: boolean
+                  flesch_score:
+                    type: number
+
+  /api/reach/scan-feed:
+    post:
+      summary: Scan Live LinkedIn Feed with Agent Eyes
+      operationId: scanFeed
+      responses:
+        '200':
+          description: Live feed updates with screenshot preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  posts_found:
+                    type: integer
+                  screenshot_url:
+                    type: string
+                  posts:
+                    type: array
+                    items:
+                      type: object
+
+  /api/reach/inspect:
+    post:
+      summary: Inspect LinkedIn URL or Article
+      operationId: inspectUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  description: URL of post, profile, or article to inspect
+      responses:
+        '200':
+          description: Synthesis of thesis, key takeaway, and strategic angles
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/comments/process:
+    post:
+      summary: Draft Human-Natural Comment Reply
+      operationId: draftCommentReply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - post_context
+                - comment_text
+              properties:
+                post_context:
+                  type: string
+                comment_text:
+                  type: string
+                author_name:
+                  type: string
+      responses:
+        '200':
+          description: 82-rule compliant reply text and reaction
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/brain/story-bank:
+    get:
+      summary: Retrieve Verified Builder Story Bank Receipts
+      operationId: getStoryBank
+      responses:
+        '200':
+          description: List of verified receipts and metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object

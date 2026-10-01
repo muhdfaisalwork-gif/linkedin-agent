@@ -1,0 +1,94 @@
+[
+  {
+    "name": "draft_linkedin_post",
+    "description": "Drafts an 82-rule humanizer compliant LinkedIn post with mobile line spacing, citing verified Story Bank receipts.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "topic": {
+          "type": "STRING",
+          "description": "Topic or core premise of the post"
+        },
+        "hook_formula": {
+          "type": "STRING",
+          "description": "Optional 2026 hook formula code (e.g. F7 for Contrast/Pivot, F10 for Ledger)"
+        },
+        "founder_angle": {
+          "type": "STRING",
+          "description": "Optional founder angle code (e.g. A5 for Raw Architecture, A1 for Anti-Consensus)"
+        },
+        "target_length": {
+          "type": "STRING",
+          "enum": ["short", "medium", "long"]
+        },
+        "image_type": {
+          "type": "STRING",
+          "enum": ["none", "quote_card", "ledger_table", "receipt_screenshot", "polaroid_diagram"]
+        }
+      },
+      "required": ["topic"]
+    }
+  },
+  {
+    "name": "scan_linkedin_feed",
+    "description": "Uses Agent Reach visual eyes to scan the live LinkedIn feed and extract recent creator posts.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "limit": {
+          "type": "INTEGER",
+          "description": "Maximum number of feed posts to extract (1-10)"
+        }
+      }
+    }
+  },
+  {
+    "name": "inspect_linkedin_url",
+    "description": "Reads and analyzes any LinkedIn post, profile, or web article via dual-backend router and generates strategic angles.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "url": {
+          "type": "STRING",
+          "description": "Full URL of post, profile, or article to inspect"
+        }
+      },
+      "required": ["url"]
+    }
+  },
+  {
+    "name": "reply_to_comment",
+    "description": "Drafts a natural, human-like comment reply using the 82 rules and cognitive brain facts.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "post_context": {
+          "type": "STRING",
+          "description": "Context of the original post"
+        },
+        "comment_text": {
+          "type": "STRING",
+          "description": "Comment text to respond to"
+        },
+        "author_name": {
+          "type": "STRING",
+          "description": "Name of commenter"
+        }
+      },
+      "required": ["post_context", "comment_text"]
+    }
+  },
+  {
+    "name": "get_story_bank_receipts",
+    "description": "Retrieves verified builder receipts, metrics, and project history from the Cognitive Brain.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "query": {
+          "type": "STRING",
+          "description": "Optional search term (e.g. 'trading', 'video', 'streaming')"
+        }
+      }
+    }
+  }
+]
