@@ -91,15 +91,23 @@ MANDATORY STRUCTURAL REQUIREMENTS:
 5. NO EXTERNAL LINKS in post text (they belong in first comment).
 6. 0 to 2 hashtags at the very bottom.
 7. STRICT RULE ENFORCEMENT: No AI buzzwords (delve, pivotal, robust, landscape, leverage, streamline). No 'In today's fast-paced world'. No fake sincerity.
-8. OUTPUT ONLY THE POST. Do not write 'Here is a draft' or 'The user wants'. Start immediately on line 1 with the post hook."""
+8. OUTPUT FORMAT: Wrap your final post inside <post> and </post> tags. Do NOT write any thoughts, outline, or preamble outside or inside the tags. Line 1 inside <post> must be the hook. Example:
+<post>
+[Hook line]
+
+[Body paragraphs]
+
+[Closing line]
+</post>"""
 
         raw_draft = self.llm.generate_text(user_prompt, system_prompt=system_prompt, temperature=0.65)
 
-        # Run Humanizer 4-pass scrub
+        # Run Humanizer 4-pass scrub with reasoning extraction
         cleaned_draft, audit = Humanizer.humanize_text(raw_draft)
 
         # Generate Visual (AI Flux Art or Typeset Quote-Card)
-        hook_line = cleaned_draft.split('\n')[0].strip() if cleaned_draft else topic
+        content_lines = [l.strip() for l in cleaned_draft.split('\n') if l.strip() and not re.match(r'^[-*_=#]+\s*$', l.strip())]
+        hook_line = content_lines[0] if content_lines else topic
         author_bio_str = voice.get("author_bio") or "Founder & Architect"
         author_name = author_bio_str.split(".")[0].strip() or "Founder & Architect"
 

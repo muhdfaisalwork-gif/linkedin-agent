@@ -74,6 +74,64 @@ REPLACEMENT_MAP = {
 
 class Humanizer:
     @staticmethod
+    def extract_clean_candidate(text: str) -> str:
+        """Strips model reasoning, code fences, thinking tags, and extracts core content."""
+        cleaned = text.strip()
+        # 1. <post> tags
+        post_match = re.search(r'<post>(.*?)</post>', cleaned, re.DOTALL | re.IGNORECASE)
+        if post_match:
+            candidate = post_match.group(1).strip()
+            if len(candidate) > 40:
+                cleaned = candidate
+
+        # 2. <think> tags (DeepSeek-R1 / Qwen)
+        cleaned = re.sub(r'<think>.*?</think>', '', cleaned, flags=re.DOTALL).strip()
+        if "</think>" in cleaned:
+            cleaned = cleaned.split("</think>")[-1].strip()
+
+        # 3. Markdown code fence wrapping
+        code_fence_match = re.search(r'```(?:markdown)?\s*\n(.*?)```', cleaned, re.DOTALL | re.IGNORECASE)
+        if code_fence_match:
+            cleaned = code_fence_match.group(1).strip()
+
+        # 4. Draft section extraction if model outputted reasoning before post
+        draft_match = re.search(
+            r'(?:here is the (?:final )?post|here[\'’]?s the post|final post|post draft|let me draft)[:\s]*\n+([\s\S]*?)(?:\n+(?:let me count|check for|my draft|total around|scorecard)\b|\Z)',
+            cleaned,
+            re.IGNORECASE
+        )
+        if draft_match:
+            extracted = draft_match.group(1).strip()
+            if len(extracted) > 100:
+                cleaned = extracted
+
+        # 5. Clean meta-thought lines leaked by reasoning models
+        lines = []
+        for l in cleaned.split('\n'):
+            s = l.strip()
+            if not s:
+                lines.append('')
+                continue
+            # Skip reasoning commentary
+            if re.match(r'^(that[\'’]?s a (strong|good|great|clean)|now let me|let me (check|count|draft|verify|build|expand|add|re-read)|check (for|character|hashtags)|total (around|chars|words)|my draft:|wait,? (i|we|need)|story bank facts to use)\b', s, re.IGNORECASE):
+                continue
+            # Strip Hook / Line 1 prefixes
+            if re.match(r'^(hook|line 1|hook line):?\s*["\'\u201c\u201d]?(.*?)["\'\u201c\u201d]?$', s, re.IGNORECASE):
+                s = re.sub(r'^(hook|line 1|hook line):?\s*["\'\u201c\u201d]?(.*?)["\'\u201c\u201d]?$', r'\2', s, flags=re.IGNORECASE)
+            lines.append(s)
+        cleaned = re.sub(r'\n{3,}', '\n\n', '\n'.join(lines)).strip()
+
+        # 6. Strip leading and trailing markdown divider lines (---, ***, ===)
+        cleaned = re.sub(r'^(?:[-*_=]{3,}\s*\n*)+', '', cleaned).strip()
+        cleaned = re.sub(r'(?:\n*[-*_=]{3,}\s*)+$', '', cleaned).strip()
+
+        # 7. Strip enclosing double quotes if whole draft is quoted
+        if cleaned.startswith('"') and cleaned.endswith('"') and len(cleaned) > 40:
+            cleaned = cleaned[1:-1].strip()
+
+        return cleaned
+
+    @staticmethod
     def humanize_text(text: str, mode: str = "strict") -> Tuple[str, Dict[str, Any]]:
         """
         4-Pass Humanizer Pipeline:
@@ -82,7 +140,7 @@ class Humanizer:
         Pass 3: REVEAL BRIDGES removal
         Pass 4: OVER-CORRECTION GUARD
         """
-        cleaned = text
+        cleaned = Humanizer.extract_clean_candidate(text)
         changes_made = []
 
         # Pass 1: Replace AI buzzwords with plain human equivalents preserving sentence capitalization
@@ -103,14 +161,24 @@ class Humanizer:
 
         # Pass 2: Clean up generic openers & assistant preamble (including thinking chatter)
         lines = [l for l in cleaned.split('\n')]
-        while lines and re.match(
-            r'^(the user wants|here is a|sure,? here|okay,? here|let me check|let[\'’]?s write|post draft:?|draft:?|headline:?|thought:?|system:?)\b',
-            lines[0].strip(),
-            re.IGNORECASE
-        ):
-            removed_line = lines.pop(0)
-            changes_made.append(f"Stripped assistant thought preamble: '{removed_line[:40]}...'")
+        while lines:
+            first = lines[0].strip()
+            if not first:
+                lines.pop(0)
+                continue
+            if re.match(
+                r'^(the user wants|here is a|here[\'’]?s a|sure,? here|okay,? here|let me\b|let[\'’]?s\b|i will\b|i[\'’]?ll\b|to write\b|post draft:?|draft:?|headline:?|thought:?|system:?|requirements:?|outline:?|step \d+:?|[-*•]\s+)\b',
+                first,
+                re.IGNORECASE
+            ):
+                removed_line = lines.pop(0)
+                changes_made.append(f"Stripped assistant thought preamble: '{removed_line[:40]}...'")
+            else:
+                break
         cleaned = '\n'.join(lines).strip()
+
+        if cleaned.startswith('"') and cleaned.endswith('"') and len(cleaned) > 40:
+            cleaned = cleaned[1:-1].strip()
 
         generic_intro_regex = r"^(in today['’]?s (rapidly evolving|digital|fast-paced|connected|modern) world,?|in the modern era,?|as technology continues to evolve,?)\s*"
         if re.search(generic_intro_regex, cleaned, re.IGNORECASE):

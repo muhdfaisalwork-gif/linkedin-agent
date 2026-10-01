@@ -1,16 +1,18 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from core.db.database import init_db
 from core.scheduler.agent_runner import AutonomousAgentRunner
+from core.mcp.server import LinkedInNexusMCPServer
 
 from api.routes import posts, profile, brain, comments, inbox, analytics, settings, planner, reach
 
 runner = AutonomousAgentRunner(check_interval_seconds=60)
+mcp_server = LinkedInNexusMCPServer()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -58,6 +60,31 @@ app.include_router(analytics.router)
 app.include_router(settings.router)
 app.include_router(planner.router)
 app.include_router(reach.router)
+
+# Model Context Protocol (MCP) HTTP Endpoint
+@app.post("/mcp")
+@app.post("/api/mcp")
+async def handle_mcp_http(request: Request):
+    try:
+        body = await request.json()
+        res = mcp_server.handle_request(body)
+        return res or {}
+    except Exception as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": None,
+            "error": {"code": -32700, "message": f"Parse error: {str(e)}"}
+        }
+
+@app.get("/mcp")
+@app.get("/api/mcp")
+def get_mcp_status():
+    return {
+        "status": "online",
+        "name": "linkedin-nexus-agent",
+        "protocol": "Model Context Protocol (JSON-RPC 2.0)",
+        "tools_available": [t["name"] for t in mcp_server.get_tool_definitions()]
+    }
 
 # Mount static and storage folders
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))

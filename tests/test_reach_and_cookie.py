@@ -75,3 +75,59 @@ def test_api_reach_feed_endpoint():
     data = res.json()
     assert "posts" in data
     assert "count" in data
+
+def test_reach_vision_analyzer():
+    from core.reach.vision_analyzer import ReachVisionAnalyzer
+    from core.llm.client import UniversalLLMClient
+    from unittest.mock import patch, MagicMock
+
+    analyzer = ReachVisionAnalyzer(UniversalLLMClient(provider="openrouter", api_key=""))
+    # Non-existent image returns error
+    res_err = analyzer.analyze_screenshot("non_existent_file_path_12345.png")
+    assert res_err["status"] == "error"
+
+    # Create temporary 1x1 test image
+    import tempfile
+    from PIL import Image
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        tmp_path = tmp.name
+        img = Image.new("RGB", (10, 10), color="blue")
+        img.save(tmp_path)
+
+    try:
+        # Heuristic / mock when no API key is provided
+        res_mock = analyzer.analyze_screenshot(tmp_path)
+        assert res_mock["status"] in ("mock", "fallback", "success")
+        assert "Visual Hierarchy" in res_mock["analysis"]
+
+        # Ollama routing test
+        ollama_client = UniversalLLMClient(provider="ollama")
+        ollama_analyzer = ReachVisionAnalyzer(ollama_client)
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {"message": {"content": "Ollama visual layout critique"}}
+            mock_post.return_value = mock_resp
+
+            res_ollama = ollama_analyzer.analyze_screenshot(tmp_path)
+            assert res_ollama["status"] == "success"
+            assert res_ollama["provider"] == "ollama"
+            assert "Ollama visual" in res_ollama["analysis"]
+
+        # Gemini routing test
+        gemini_client = UniversalLLMClient(provider="gemini", api_key="fake-gemini-key")
+        gemini_analyzer = ReachVisionAnalyzer(gemini_client)
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {"choices": [{"message": {"content": "Gemini visual critique"}}]}
+            mock_post.return_value = mock_resp
+
+            res_gemini = gemini_analyzer.analyze_screenshot(tmp_path)
+            assert res_gemini["status"] == "success"
+            assert res_gemini["provider"] == "gemini"
+            assert "Gemini visual" in res_gemini["analysis"]
+
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)

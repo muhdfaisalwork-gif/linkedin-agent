@@ -146,3 +146,34 @@ def test_mcp_unknown_tool_error(mcp_server):
     assert "result" in res
     assert res["result"].get("isError") is True
     assert "Unknown tool" in res["result"]["content"][0]["text"]
+
+def test_mcp_http_endpoints():
+    from fastapi.testclient import TestClient
+    from api.app import app
+    client = TestClient(app)
+
+    # GET /mcp
+    res_get = client.get("/mcp")
+    assert res_get.status_code == 200
+    assert res_get.json()["status"] == "online"
+    assert len(res_get.json()["tools_available"]) >= 7
+
+    # POST /mcp (JSON-RPC ping)
+    res_post = client.post("/mcp", json={
+        "jsonrpc": "2.0",
+        "id": 100,
+        "method": "ping"
+    })
+    assert res_post.status_code == 200
+    assert res_post.json()["id"] == 100
+    assert res_post.json()["result"] == {}
+
+    # POST /api/mcp (tools/list)
+    res_tools = client.post("/api/mcp", json={
+        "jsonrpc": "2.0",
+        "id": 101,
+        "method": "tools/list"
+    })
+    assert res_tools.status_code == 200
+    assert res_tools.json()["id"] == 101
+    assert "tools" in res_tools.json()["result"]
