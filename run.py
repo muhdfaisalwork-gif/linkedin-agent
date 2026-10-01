@@ -29,6 +29,7 @@ def main():
     print("  [LinkedIn Nexus Agent] Autonomous AI Studio & Dashboard")
     print("  [Brain] Cognitive Brain: Story Bank, Voice Profile & Heuristics")
     print("  [Engine] Writing Engine: 82-Rule Strict Human-Natural Gate")
+    print("  [SEO] GitHub SEO Agent: Repository Discoverability & Launch Packs")
     print("=" * 65)
 
     # Initialize Database and Seeds
