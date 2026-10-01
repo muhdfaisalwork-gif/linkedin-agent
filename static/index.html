@@ -3,76 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub SEO Agent — Dashboard</title>
+    <title>GitHub SEO Agent — Open Source Studio</title>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --accent: #58a6ff; --green: #3fb950; --yellow: #d29922; --red: #f85149; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%); padding: 24px 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
-        .header h1 { font-size: 24px; color: #fff; }
+        .header { background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%); padding: 20px 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 22px; color: #fff; display: flex; align-items: center; gap: 8px; }
         .header h1 span { color: var(--accent); }
-        .container { max-width: 1200px; margin: 32px auto; padding: 0 24px; }
+        .container { max-width: 1200px; margin: 28px auto; padding: 0 24px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-        .card h2 { font-size: 18px; margin-bottom: 16px; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .score-ring { width: 120px; height: 120px; border-radius: 50%; border: 6px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; margin: 16px auto; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+        .card h2 { font-size: 17px; margin-bottom: 16px; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .score-ring { width: 110px; height: 110px; border-radius: 50%; border: 6px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: bold; margin: 12px auto; }
         .score-ring.good { border-color: var(--green); color: var(--green); }
         .score-ring.mid { border-color: var(--yellow); color: var(--yellow); }
         .score-ring.bad { border-color: var(--red); color: var(--red); }
-        .checklist { list-style: none; }
-        .checklist li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .checklist { list-style: none; max-height: 220px; overflow-y: auto; margin-top: 12px; }
+        .checklist li { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
         .checklist li:last-child { border: none; }
-        .badge { display: inline-block; background: #21262d; padding: 4px 10px; border-radius: 16px; font-size: 13px; margin: 4px; }
-        button { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .badge { display: inline-block; background: #21262d; border: 1px solid var(--border); padding: 4px 10px; border-radius: 16px; font-size: 12px; margin: 3px; }
+        button { background: var(--accent); color: #fff; border: none; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.2s; }
         button:hover { opacity: 0.9; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
-        select, input { background: #21262d; color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 14px; width: 100%; margin-bottom: 12px; }
-        .output { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 13px; max-height: 400px; overflow-y: auto; }
+        button.secondary { background: #21262d; border: 1px solid var(--border); color: #c9d1d9; }
+        button.secondary:hover { background: #30363d; }
+        button.success { background: #238636; }
+        select, input, textarea { background: #21262d; color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; width: 100%; margin-bottom: 10px; font-family: inherit; }
+        .btn-row { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+        .output { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 14px; white-space: pre-wrap; font-family: 'Fira Code', Consolas, monospace; font-size: 12.5px; max-height: 380px; overflow-y: auto; }
         .full-width { grid-column: 1 / -1; }
-        .status { padding: 6px 12px; border-radius: 6px; display: inline-block; font-size: 13px; }
+        .status { padding: 5px 12px; border-radius: 6px; display: inline-block; font-size: 12px; font-weight: 500; }
         .status.ok { background: #1b3a26; color: var(--green); }
-        .status.loading { background: #1c2333; color: var(--accent); }
+        .status.err { background: #3d1515; color: var(--red); }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🔍 <span>GitHub SEO Agent</span> — Dashboard</h1>
-        <span class="status ok" id="apiStatus">● Connected</span>
+        <h1>🔍 <span>GitHub SEO Agent</span> Studio</h1>
+        <span class="status ok" id="apiStatus">● Server Online</span>
     </div>
 
     <div class="container">
         <div class="grid">
             <!-- Audit Card -->
             <div class="card">
-                <h2>📊 SEO Audit</h2>
+                <h2>📊 Repository Audit & Score</h2>
                 <div class="score-ring" id="scoreRing">--</div>
-                <p style="text-align:center;margin-bottom:16px;font-size:14px;" id="gradeLabel">Click to audit</p>
-                <button onclick="runAudit()" id="auditBtn">Run Audit</button>
+                <p style="text-align:center;margin-bottom:12px;font-size:13px;" id="gradeLabel">Audit status: click below to analyze</p>
+                <div class="btn-row">
+                    <button onclick="runAudit()" id="auditBtn">Run Full SEO Audit</button>
+                    <button class="secondary" onclick="installCommunityFiles()" id="commBtn">Install Community Standards</button>
+                </div>
                 <ul class="checklist" id="checklist"></ul>
             </div>
 
-            <!-- Topics Card -->
+            <!-- Launch Pack & AI Card -->
             <div class="card">
-                <h2>🏷️ Recommended Topics</h2>
-                <div id="topicsArea"><p>Run audit to see recommended topics.</p></div>
-                <div style="margin-top:16px">
-                    <h2>🚀 Launch Pack</h2>
-                    <select id="channelSelect">
-                        <option value="all">All Channels</option>
-                        <option value="hacker_news">Hacker News</option>
-                        <option value="reddit">Reddit</option>
-                        <option value="twitter_thread">Twitter/X Thread</option>
-                        <option value="product_hunt">Product Hunt</option>
-                        <option value="release_notes">Release Notes</option>
-                    </select>
-                    <button onclick="runLaunch()">Generate Launch Copy</button>
+                <h2>🚀 Viral Launch Copy Generator</h2>
+                <label style="font-size:12px;display:block;margin-bottom:4px;">Target Launch Channel:</label>
+                <select id="channelSelect">
+                    <option value="all">All Channels (HN, Reddit, X, PH, Releases)</option>
+                    <option value="hacker_news">Hacker News (Show HN)</option>
+                    <option value="reddit">Reddit (r/technology, r/opensource)</option>
+                    <option value="twitter_thread">Twitter / X Viral Thread</option>
+                    <option value="product_hunt">Product Hunt Tagline & Pitch</option>
+                    <option value="release_notes">GitHub Release Notes</option>
+                </select>
+
+                <label style="font-size:12px;display:block;margin-bottom:4px;">Strategic Angle (Optional):</label>
+                <input type="text" id="angleInput" placeholder="e.g. 100% free open-source, privacy-first, local AI" />
+
+                <label style="font-size:12px;display:block;margin-bottom:4px;">AI Free Model (OpenRouter):</label>
+                <select id="modelSelect">
+                    <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free (Recommended)</option>
+                    <option value="nvidia/nemotron-3.5-lightning:free">nvidia/nemotron-3.5-lightning:free</option>
+                    <option value="google/gemma-4-26b-a4b-it:free">google/gemma-4-26b-a4b-it:free</option>
+                    <option value="qwen/qwen3.8-27b:free">qwen/qwen3.8-27b:free</option>
+                </select>
+
+                <div class="btn-row">
+                    <button onclick="runLaunch(false)">Curated Template</button>
+                    <button class="success" onclick="runLaunch(true)" id="aiBtn">Synthesize with Free AI</button>
+                </div>
+
+                <div style="margin-top:16px;">
+                    <label style="font-size:12px;display:block;margin-bottom:4px;">Recommended Topic Tags:</label>
+                    <div id="topicsArea"><span style="font-size:12px;color:#8b949e;">Run audit to calculate topics.</span></div>
                 </div>
             </div>
 
-            <!-- Output Card -->
+            <!-- README Optimizer Card -->
             <div class="card full-width">
-                <h2>📋 Output</h2>
-                <div class="output" id="output">Ready. Click an action above to begin.</div>
+                <h2>📝 README Optimizer</h2>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div>
+                        <input type="text" id="readmeProj" placeholder="Project Name" value="My Awesome Tool" />
+                        <input type="text" id="readmeTagline" placeholder="Tagline" value="The modern open-source engine for developers" />
+                    </div>
+                    <div>
+                        <input type="text" id="readmeFeats" placeholder="Features (comma-separated)" value="Fast execution, Offline privacy, MCP integration" />
+                        <input type="text" id="readmeTech" placeholder="Tech Stack (comma-separated)" value="Python, FastAPI, MCP, Uvicorn" />
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="secondary" onclick="generateReadme(false)">Preview Optimized README</button>
+                    <button class="secondary" onclick="generateReadme(true)">Apply & Write to README.md</button>
+                </div>
+            </div>
+
+            <!-- Output Console -->
+            <div class="card full-width">
+                <h2>📋 Terminal Output</h2>
+                <div class="output" id="output">System initialized. Click any action to run.</div>
             </div>
         </div>
     </div>
@@ -89,7 +132,7 @@
                 const ring = document.getElementById('scoreRing');
                 ring.textContent = data.score;
                 ring.className = 'score-ring ' + (data.score >= 80 ? 'good' : data.score >= 50 ? 'mid' : 'bad');
-                document.getElementById('gradeLabel').textContent = `Grade: ${data.grade}`;
+                document.getElementById('gradeLabel').textContent = `Grade: ${data.grade} (${data.score}/100)`;
 
                 const cl = document.getElementById('checklist');
                 cl.innerHTML = (data.checklist || []).map(c => `<li>✓ ${c}</li>`).join('');
@@ -99,39 +142,105 @@
 
                 document.getElementById('output').textContent = JSON.stringify(data, null, 2);
             } catch (e) {
-                document.getElementById('output').textContent = `Error: ${e.message}`;
+                document.getElementById('output').textContent = `Audit Error: ${e.message}`;
             }
-            btn.disabled = false; btn.textContent = 'Run Audit';
+            btn.disabled = false; btn.textContent = 'Run Full SEO Audit';
         }
 
-        async function runLaunch() {
+        async function runLaunch(useAi) {
             const channel = document.getElementById('channelSelect').value;
+            const angle = document.getElementById('angleInput').value.trim();
+            const model = document.getElementById('modelSelect').value;
+
+            if (useAi) {
+                const btn = document.getElementById('aiBtn');
+                btn.disabled = true; btn.textContent = 'Synthesizing...';
+                try {
+                    const res = await fetch(`${API}/api/ai-launch`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            channel: channel === 'all' ? 'hacker_news' : channel,
+                            angle: angle,
+                            model: model
+                        })
+                    });
+                    const data = await res.json();
+                    document.getElementById('output').textContent = data.result || data.error || JSON.stringify(data, null, 2);
+                } catch (e) {
+                    document.getElementById('output').textContent = `AI Error: ${e.message}`;
+                }
+                btn.disabled = false; btn.textContent = 'Synthesize with Free AI';
+            } else {
+                try {
+                    const res = await fetch(`${API}/api/launch`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({channel})
+                    });
+                    const data = await res.json();
+                    const lines = [];
+                    for (const [ch, text] of Object.entries(data.packs || {})) {
+                        lines.push(`--- [${ch.toUpperCase()}] ---\n${text}\n`);
+                    }
+                    document.getElementById('output').textContent = lines.join('\n');
+                } catch (e) {
+                    document.getElementById('output').textContent = `Error: ${e.message}`;
+                }
+            }
+        }
+
+        async function generateReadme(apply) {
+            const name = document.getElementById('readmeProj').value.trim() || 'My Project';
+            const tagline = document.getElementById('readmeTagline').value.trim();
+            const feats = document.getElementById('readmeFeats').value.split(',').map(s => s.strip ? s.strip() : s.trim()).filter(Boolean);
+            const tech = document.getElementById('readmeTech').value.split(',').map(s => s.strip ? s.strip() : s.trim()).filter(Boolean);
+
             try {
-                const res = await fetch(`${API}/api/launch`, {
+                const res = await fetch(`${API}/api/readme`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({channel})
+                    body: JSON.stringify({
+                        project_name: name,
+                        tagline: tagline,
+                        features: feats,
+                        tech_stack: tech,
+                        apply: apply
+                    })
                 });
                 const data = await res.json();
-                const lines = [];
-                for (const [ch, text] of Object.entries(data.packs || {})) {
-                    lines.push(`--- [${ch.toUpperCase()}] ---\n${text}\n`);
+                document.getElementById('output').textContent = data.readme_content || JSON.stringify(data, null, 2);
+                if (apply && data.applied) {
+                    alert('✓ README.md written to disk successfully!');
+                    runAudit();
                 }
-                document.getElementById('output').textContent = lines.join('\n');
             } catch (e) {
                 document.getElementById('output').textContent = `Error: ${e.message}`;
             }
         }
 
-        // Check API health on load
+        async function installCommunityFiles() {
+            try {
+                const res = await fetch(`${API}/api/community`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({apply: true})
+                });
+                const data = await res.json();
+                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+                alert('✓ Community standards files installed successfully!');
+                runAudit();
+            } catch (e) {
+                document.getElementById('output').textContent = `Error: ${e.message}`;
+            }
+        }
+
         fetch(`${API}/health`).then(r => r.json()).then(d => {
-            document.getElementById('apiStatus').textContent = '● Connected';
+            document.getElementById('apiStatus').textContent = '● Server Online';
             document.getElementById('apiStatus').className = 'status ok';
         }).catch(() => {
-            document.getElementById('apiStatus').textContent = '● Disconnected';
-            document.getElementById('apiStatus').className = 'status';
-            document.getElementById('apiStatus').style.background = '#3d1515';
-            document.getElementById('apiStatus').style.color = '#f85149';
+            document.getElementById('apiStatus').textContent = '● Server Offline';
+            document.getElementById('apiStatus').className = 'status err';
         });
     </script>
 </body>

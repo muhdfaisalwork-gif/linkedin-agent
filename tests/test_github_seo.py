@@ -186,3 +186,19 @@ def test_api_audit():
     data = res.json()
     assert "score" in data
     assert "grade" in data
+
+def test_engine_empty_keywords_edge_case():
+    engine = GitHubSEOAgent("owner", "repo")
+    engine.set_keywords([])
+    packs = engine.generate_launch_pack("all")
+    assert "hacker_news" in packs
+    cmd = engine.get_gh_cli_topics_command()
+    assert "gh repo edit" in cmd
+
+def test_api_root_serves_html():
+    from api.server import app
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+    res = client.get("/")
+    assert res.status_code == 200
+    assert "GitHub SEO Agent" in res.text

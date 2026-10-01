@@ -154,6 +154,17 @@ class GitHubSEOMCPServer:
 
     def run_stdio(self):
         """Runs the MCP server over stdin/stdout line-by-line."""
+        if hasattr(sys.stdout, "reconfigure"):
+            try:
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+        if hasattr(sys.stdin, "reconfigure"):
+            try:
+                sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
         for line in sys.stdin:
             line = line.strip()
             if not line:
@@ -162,7 +173,7 @@ class GitHubSEOMCPServer:
                 req = json.loads(line)
                 resp = self.handle_request(req)
                 if resp is not None:
-                    sys.stdout.write(json.dumps(resp) + "\n")
+                    sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
                     sys.stdout.flush()
             except json.JSONDecodeError:
                 continue

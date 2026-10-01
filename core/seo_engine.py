@@ -142,11 +142,12 @@ class GitHubSEOAgent:
 
     def generate_launch_pack(self, channel: str = 'all') -> Dict[str, str]:
         """Generates curated launch copy for different platforms."""
+        main_kw = self.keywords[0]['keyword'] if self.keywords else 'open-source'
         packs = {
-            'hacker_news': f"Show HN: {self.repo_name} - An open-source tool for {self.keywords[0]['keyword']}.",
-            'reddit': f"I built {self.repo_name} to solve {self.keywords[0]['keyword']} problems.",
-            'twitter_thread': f"Introducing {self.repo_name}! A new way to handle {self.keywords[0]['keyword']}. Thread 🧵...",
-            'product_hunt': f"{self.repo_name} - The ultimate {self.keywords[0]['keyword']} tool.",
+            'hacker_news': f"Show HN: {self.repo_name} - An open-source tool for {main_kw}.",
+            'reddit': f"I built {self.repo_name} to solve {main_kw} problems.",
+            'twitter_thread': f"Introducing {self.repo_name}! A new way to handle {main_kw}. Thread 🧵...",
+            'product_hunt': f"{self.repo_name} - The ultimate {main_kw} tool.",
             'release_notes': f"# Release Notes\n\nInitial release of {self.repo_name}."
         }
         if channel != 'all' and channel in packs:
@@ -166,5 +167,6 @@ class GitHubSEOAgent:
 
     def get_gh_cli_topics_command(self) -> str:
         """Returns the gh repo edit command for topics."""
-        topics = [k['keyword'].replace(' ', '-') for k in self.keywords]
-        return f"gh repo edit {self.repo_owner}/{self.repo_name} --add-topic {','.join(topics)}"
+        topics = [k['keyword'].replace(' ', '-') for k in self.keywords if 'keyword' in k]
+        topics_str = ','.join(topics) if topics else 'open-source'
+        return f"gh repo edit {self.repo_owner}/{self.repo_name} --add-topic {topics_str}"

@@ -16,6 +16,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Automatically load .env if present
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+if os.path.exists(env_path):
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    k, v = line.split('=', 1)
+                    k, v = k.strip(), v.strip().strip('"').strip("'")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+    except Exception:
+        pass
+
 REPO_DIR = os.getenv("REPO_DIR", os.getcwd())
 REPO_OWNER = os.getenv("REPO_OWNER", "owner")
 REPO_NAME = os.getenv("REPO_NAME", "repo")
@@ -119,10 +134,20 @@ def install_community(req: CommunityRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ─── Static Files ──────────────────────────────────────────────────
+# ─── Static & Web Dashboard ──────────────────────────────────────────
+
+from fastapi.responses import FileResponse
+
+static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+
+@app.get("/")
+def serve_index():
+    index_path = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "GitHub SEO Agent API"}
 
 try:
-    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
     if os.path.exists(static_dir):
         from fastapi.staticfiles import StaticFiles
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
