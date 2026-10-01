@@ -770,11 +770,14 @@ Click "Generate New 7-Day Plan" to build a customized weekly calendar balancing 
                             <label class="block text-[11px] font-semibold text-slate-400 mb-1">Model Engine</label>
                             <select id="setting-model" onchange="checkCustomModelVisibility()" class="w-full bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-slate-200">
                                 <optgroup label="✨ 100% Free Models (Zero Credits Needed)">
-                                    <option value="openrouter/free">openrouter/free (Auto-routing recommended)</option>
-                                    <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free (Gemma 4 31B)</option>
+                                    <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free (Gemma 4 31B — Recommended)</option>
+                                    <option value="nvidia/nemotron-3.5-lightning:free">nvidia/nemotron-3.5-lightning:free (Nemotron 3.5)</option>
+                                    <option value="google/gemma-4-26b-a4b-it:free">google/gemma-4-26b-a4b-it:free</option>
+                                    <option value="nvidia/nemotron-3-super-120b-a12b:free">nvidia/nemotron-3-super-120b-a12b:free</option>
+                                    <option value="qwen/qwen3.8-27b:free">qwen/qwen3.8-27b:free</option>
+                                    <option value="openrouter/free">openrouter/free (Auto-routing)</option>
                                     <option value="inclusionai/ling-3.0-flash-sante:free">inclusionai/ling-3.0-flash-sante:free</option>
                                     <option value="liquid/lfm-2.5-2.6b:free">liquid/lfm-2.5-2.6b:free</option>
-                                    <option value="nvidia/nemotron-3.5-lightning:free">nvidia/nemotron-3.5-lightning:free</option>
                                 </optgroup>
                                 <optgroup label="🧠 Commercial Flagships">
                                     <option value="anthropic/claude-3.7-sonnet">anthropic/claude-3.7-sonnet</option>
@@ -1151,6 +1154,38 @@ Click "Generate New 7-Day Plan" to build a customized weekly calendar balancing 
                                 <button onclick="selectLaunchChannel('release_notes')" id="channel-btn-release_notes" class="launch-channel-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition">
                                     Release Notes (v1.0.0)
                                 </button>
+                            </div>
+
+                            <!-- AI Viral Generator Controls -->
+                            <div class="p-3.5 bg-dark-900/90 border border-dark-700 rounded-xl space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5 text-xs font-bold text-orange-400">
+                                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                        <span>AI Custom Launch Synthesizer</span>
+                                    </div>
+                                    <span id="seo-ai-status-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-300 border border-orange-500/20">Free OpenRouter Models</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                                    <div class="md:col-span-4">
+                                        <label class="block text-[10px] font-semibold text-slate-400 mb-1">Model Engine</label>
+                                        <select id="seo-ai-model" class="w-full bg-dark-800 border border-dark-700 rounded-lg p-2 text-xs text-slate-200">
+                                            <option value="google/gemma-4-31b-it:free">Gemma 4 31B (Recommended Free)</option>
+                                            <option value="nvidia/nemotron-3.5-lightning:free">Nemotron 3.5 (Fast Free)</option>
+                                            <option value="google/gemma-4-26b-a4b-it:free">Gemma 4 26B (Free)</option>
+                                            <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (Free)</option>
+                                            <option value="qwen/qwen3.8-27b:free">Qwen 3.8 27B (Free)</option>
+                                        </select>
+                                    </div>
+                                    <div class="md:col-span-8">
+                                        <label class="block text-[10px] font-semibold text-slate-400 mb-1">Custom Strategic Angle or Hook</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="seo-ai-angle" placeholder="e.g. Focus on 100% offline Ollama & DeepSeek-R1 for solo devs" class="flex-1 bg-dark-800 border border-dark-700 rounded-lg p-2 text-xs text-slate-200 focus:border-orange-500 focus:outline-none">
+                                            <button id="btn-generate-ai-launch" onclick="generateAILaunchCopy()" class="px-3.5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-lg text-xs font-semibold transition shrink-0 flex items-center gap-1.5 shadow-md shadow-orange-600/20">
+                                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Synthesize with AI
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Launch Copy Textarea -->

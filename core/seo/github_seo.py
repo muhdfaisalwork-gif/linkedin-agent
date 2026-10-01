@@ -442,6 +442,130 @@ Full documentation: {repo_url}#readme"""
             return {channel: packs[channel]}
         return packs
 
+    def generate_ai_launch_content(
+        self,
+        channel: str = "hacker_news",
+        angle: str = "",
+        model: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Uses OpenRouter free models (like google/gemma-4-31b-it:free or nvidia/nemotron-3.5-lightning:free)
+        to synthesize tailored viral launch copy for LinkedIn Nexus Agent.
+        Gracefully falls back to curated viral launch templates if offline or quota-limited.
+        """
+        repo_url = "https://github.com/muhdfaisalwork-gif/linkedin-agent"
+        chosen_model = model or os.getenv("OPENROUTER_MODEL") or "google/gemma-4-31b-it:free"
+
+        system_prompt = (
+            "You are an elite Developer Relations & Open-Source Growth Engineer. "
+            "Your mission is to write high-converting, authentic, zero-fluff promotional copy for the open-source repository: "
+            f"LinkedIn Nexus Agent ({repo_url}).\n\n"
+            "Key Architectural Highlights:\n"
+            "- 100% Free & Open-Source alternative to Taplio ($89/mo) and AuthoredUp ($40/mo).\n"
+            "- 82-Rule Humanizer Guardrail: Programmatic anti-slop engine that bans AI tells ('delve', 'pivotal', 'in today's landscape').\n"
+            "- Cognitive Brain: Local SQLite memory for verified metrics, project receipts, and scars (no hallucinated case studies).\n"
+            "- Agent Reach Eyes: Dual-backend router (Playwright DOM + Jina Reader) for feed scanning & commentary synthesis.\n"
+            "- Multi-Model Freedom: Runs 100% offline with Local Ollama (DeepSeek-R1 / Llama 3.2), or cloud APIs (Claude, GPT-4o, Gemma 4, Nemotron).\n"
+            "- Model Context Protocol (MCP) Server: JSON-RPC 2.0 stdio server for Claude Desktop and Cursor.\n"
+            "- 1-Second Cookie Connection: Direct li_at cookie injection.\n\n"
+            "Style Guide:\n"
+            "- Be direct, technical, humble yet punchy.\n"
+            "- Avoid robotic corporate speak or emoji floods.\n"
+            "- Tailor tone strictly to the target community."
+        )
+
+        user_prompt = (
+            f"Generate a complete launch submission for channel: '{channel}'.\n"
+            f"Strategic Focus / Angle: {angle or 'Open-source privacy-first alternative to expensive SaaS tools, featuring 82 humanizer rules and local Ollama.'}\n\n"
+            "Provide ready-to-publish copy with a compelling title and body."
+        )
+
+        try:
+            from core.llm.client import OpenRouterProvider
+            provider = OpenRouterProvider(model=chosen_model)
+            if not provider.api_key:
+                raise ValueError("No OpenRouter API key configured.")
+
+            res = provider.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2048
+            )
+            return {
+                "status": "success",
+                "source": "openrouter_ai",
+                "model_used": res.get("model_used", chosen_model),
+                "channel": channel,
+                "angle": angle,
+                "content": res.get("content", "").strip()
+            }
+        except Exception as e:
+            packs = self.generate_launch_pack(channel)
+            fallback_text = packs.get(channel) or list(packs.values())[0]
+            return {
+                "status": "success",
+                "source": "template_fallback",
+                "model_used": chosen_model,
+                "channel": channel,
+                "angle": angle,
+                "content": fallback_text,
+                "note": f"Served via curated launch pack (LLM fallback active: {str(e)})"
+            }
+
+    def ai_pitch_readme(
+        self,
+        focus_area: str = "developer_acquisition",
+        model: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Uses Gemma 4 / Nemotron to generate high-converting value propositions and hero copy for README.md.
+        """
+        chosen_model = model or os.getenv("OPENROUTER_MODEL") or "google/gemma-4-31b-it:free"
+
+        system_prompt = (
+            "You are an expert GitHub README copywriter specializing in developer tools. "
+            "Write punchy, high-converting hero headlines and bullet points for the LinkedIn Nexus Agent open-source project."
+        )
+        user_prompt = f"Write a conversion-focused hero pitch section for README.md. Target focus: {focus_area}."
+
+        try:
+            from core.llm.client import OpenRouterProvider
+            provider = OpenRouterProvider(model=chosen_model)
+            if not provider.api_key:
+                raise ValueError("No OpenRouter API key configured.")
+
+            res = provider.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1024
+            )
+            return {
+                "status": "success",
+                "source": "openrouter_ai",
+                "model_used": res.get("model_used", chosen_model),
+                "pitch": res.get("content", "").strip()
+            }
+        except Exception as e:
+            return {
+                "status": "success",
+                "source": "curated_fallback",
+                "model_used": chosen_model,
+                "pitch": (
+                    "### The #1 Free, Open-Source Alternative to Taplio & AuthoredUp\n\n"
+                    "- **Zero Monthly Subscriptions**: Replace $89/mo proprietary tools with local control.\n"
+                    "- **82-Rule Humanizer**: Eliminate robotic AI slop and 2026 reach penalties.\n"
+                    "- **100% Offline with Ollama**: DeepSeek-R1 and Llama 3.2 keep your drafts private.\n"
+                    "- **Claude Desktop & Cursor MCP**: Chat with your studio directly from your IDE."
+                ),
+                "note": f"Served via curated pitch (LLM fallback: {str(e)})"
+            }
+
     def generate_community_health_files(self) -> Dict[str, str]:
         """
         Creates GitHub Community Standards files to achieve a 100% GitHub Health Score.

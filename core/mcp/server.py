@@ -181,6 +181,19 @@ class LinkedInNexusMCPServer:
                             "enum": ["all", "hacker_news", "reddit_localllama", "reddit_selfhosted", "twitter_thread", "release_notes"],
                             "description": "Target community channel for launch promotion.",
                             "default": "all"
+                        },
+                        "use_ai": {
+                            "type": "boolean",
+                            "description": "Use OpenRouter free models (Gemma 4 / Nemotron) for AI synthesis.",
+                            "default": False
+                        },
+                        "angle": {
+                            "type": "string",
+                            "description": "Custom angle or hook to emphasize (e.g. offline privacy, local Ollama)."
+                        },
+                        "model": {
+                            "type": "string",
+                            "description": "OpenRouter model identifier (defaults to google/gemma-4-31b-it:free)."
                         }
                     }
                 }
@@ -315,11 +328,20 @@ class LinkedInNexusMCPServer:
             from core.seo.github_seo import LinkedInNexusGitHubSEO
             engine = LinkedInNexusGitHubSEO()
             channel = arguments.get("channel", "all")
-            packs = engine.generate_launch_pack(channel=channel)
-            lines = [f"### LinkedIn Nexus Agent Launch Pack ({channel}):\n"]
-            for ch, text in packs.items():
-                lines.append(f"#### Channel: {ch.upper()}\n{text}\n\n---\n")
-            return "\n".join(lines)
+            use_ai = arguments.get("use_ai", False)
+            angle = arguments.get("angle", "")
+            model = arguments.get("model", None)
+            if use_ai:
+                target_channel = channel if channel != "all" else "hacker_news"
+                res = engine.generate_ai_launch_content(channel=target_channel, angle=angle, model=model)
+                source_note = f" (Source: {res.get('source')}, Model: {res.get('model_used')})"
+                return f"### LinkedIn Nexus Agent AI Launch Pack ({res.get('channel')}){source_note}:\n\n{res.get('content')}"
+            else:
+                packs = engine.generate_launch_pack(channel=channel)
+                lines = [f"### LinkedIn Nexus Agent Launch Pack ({channel}):\n"]
+                for ch, text in packs.items():
+                    lines.append(f"#### Channel: {ch.upper()}\n{text}\n\n---\n")
+                return "\n".join(lines)
 
         raise ValueError(f"Unknown tool: {tool_name}")
 

@@ -13,6 +13,15 @@ class OptimizeReadmeRequest(BaseModel):
 class LaunchPackRequest(BaseModel):
     channel: str = "all"
 
+class AILaunchRequest(BaseModel):
+    channel: str = "hacker_news"
+    angle: Optional[str] = None
+    model: Optional[str] = None
+
+class AIPitchRequest(BaseModel):
+    focus_area: str = "developer_acquisition"
+    model: Optional[str] = None
+
 @router.get("/audit")
 def get_seo_audit():
     """Returns repository GitHub SEO health score (0-100), checklist, and recommended topics."""
@@ -65,5 +74,28 @@ def install_community_files():
     """Generates .github workflows, issue templates, CONTRIBUTING.md, and SECURITY.md."""
     try:
         return engine.generate_community_health_files()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/ai-launch")
+def generate_ai_launch(req: AILaunchRequest):
+    """Generates AI-crafted launch copy using OpenRouter free models (Gemma 4, Nemotron)."""
+    try:
+        return engine.generate_ai_launch_content(
+            channel=req.channel,
+            angle=req.angle or "",
+            model=req.model
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/ai-pitch")
+def generate_ai_pitch(req: AIPitchRequest):
+    """Generates punchy README pitch hero copy using OpenRouter free models."""
+    try:
+        return engine.ai_pitch_readme(
+            focus_area=req.focus_area,
+            model=req.model
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -14,12 +14,15 @@ class OpenRouterProvider(BaseLLMProvider):
     BASE_URL = "https://openrouter.ai/api/v1"
 
     DEFAULT_FALLBACKS = [
+        "google/gemma-4-31b-it:free",
+        "nvidia/nemotron-3.5-lightning:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "qwen/qwen3.8-27b:free",
         "inclusionai/ling-3.0-flash-sante:free",
         "liquid/lfm-2.5-2.6b:free",
-        "dots-studio/dots-3-note-preview:free",
-        "stealth/space-bunny-alpha",
-        "google/gemma-4-31b-it:free",
-        "google/gemma-4-26b-a4b-it:free"
+        "dots-studio/dots-3-note-preview:free"
     ]
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
@@ -42,7 +45,7 @@ class OpenRouterProvider(BaseLLMProvider):
 
     @property
     def model(self) -> str:
-        return self._model or os.getenv("OPENROUTER_MODEL", "inclusionai/ling-3.0-flash-sante:free")
+        return self._model or os.getenv("OPENROUTER_MODEL", "google/gemma-4-31b-it:free")
 
     @property
     def active_chain(self) -> List[str]:

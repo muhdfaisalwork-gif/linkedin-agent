@@ -43,7 +43,7 @@ def get_settings():
     conn.close()
 
     provider = os.getenv("LLM_PROVIDER") or db_settings.get("LLM_PROVIDER", "openrouter")
-    openrouter_model = os.getenv("OPENROUTER_MODEL") or db_settings.get("OPENROUTER_MODEL", "inclusionai/ling-3.0-flash-sante:free")
+    openrouter_model = os.getenv("OPENROUTER_MODEL") or db_settings.get("OPENROUTER_MODEL", "google/gemma-4-31b-it:free")
     openai_model = os.getenv("OPENAI_MODEL") or db_settings.get("OPENAI_MODEL", "gpt-4o")
     anthropic_model = os.getenv("ANTHROPIC_MODEL") or db_settings.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
     gemini_model = os.getenv("GEMINI_MODEL") or db_settings.get("GEMINI_MODEL", "gemini-2.0-flash")

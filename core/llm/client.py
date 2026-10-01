@@ -75,7 +75,7 @@ class UniversalLLMClient:
         elif provider == "custom":
             return _get_db_setting("CUSTOM_MODEL") or os.getenv("CUSTOM_MODEL") or "local-model"
         else:
-            return _get_db_setting("OPENROUTER_MODEL") or os.getenv("OPENROUTER_MODEL") or "inclusionai/ling-3.0-flash-sante:free"
+            return _get_db_setting("OPENROUTER_MODEL") or os.getenv("OPENROUTER_MODEL") or "google/gemma-4-31b-it:free"
 
     @property
     def api_key(self) -> Optional[str]:

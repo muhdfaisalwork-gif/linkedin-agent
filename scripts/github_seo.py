@@ -34,6 +34,9 @@ def main():
     # Launch pack command
     launch_parser = subparsers.add_parser("launch", help="Generate multi-channel launch copy")
     launch_parser.add_argument("--channel", default="all", choices=["all", "hacker_news", "reddit_localllama", "reddit_selfhosted", "twitter_thread", "release_notes"], help="Specific channel")
+    launch_parser.add_argument("--ai", action="store_true", help="Use OpenRouter free models (Gemma 4 / Nemotron) to synthesize custom copy")
+    launch_parser.add_argument("--angle", type=str, default="", help="Custom strategic angle or hook to emphasize")
+    launch_parser.add_argument("--model", type=str, default=None, help="OpenRouter model ID (defaults to google/gemma-4-31b-it:free)")
 
     # Community command
     comm_parser = subparsers.add_parser("community", help="Generate GitHub Community Standards files")
@@ -75,11 +78,21 @@ def main():
             print(optimized)
 
     elif args.command == "launch":
-        packs = engine.generate_launch_pack(channel=args.channel)
-        for ch, text in packs.items():
-            print(f"\n--- [CHANNEL: {ch.upper()}] ---")
-            print(text)
-            print("-" * 50)
+        if getattr(args, "ai", False):
+            channels = [args.channel] if args.channel != "all" else ["hacker_news", "reddit_localllama", "reddit_selfhosted", "twitter_thread", "release_notes"]
+            for ch in channels:
+                res = engine.generate_ai_launch_content(channel=ch, angle=args.angle, model=args.model)
+                print(f"\n--- [CHANNEL: {ch.upper()}] (Model: {res.get('model_used')} | Source: {res.get('source')}) ---")
+                if "note" in res:
+                    print(f"Note: {res['note']}\n")
+                print(res["content"])
+                print("-" * 50)
+        else:
+            packs = engine.generate_launch_pack(channel=args.channel)
+            for ch, text in packs.items():
+                print(f"\n--- [CHANNEL: {ch.upper()}] ---")
+                print(text)
+                print("-" * 50)
 
     elif args.command == "community":
         if args.apply:

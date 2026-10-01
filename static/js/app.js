@@ -1681,3 +1681,58 @@ async function installCommunityHealthFiles() {
     }
 }
 
+async function generateAILaunchCopy() {
+    const btn = document.getElementById('btn-generate-ai-launch');
+    const angleInput = document.getElementById('seo-ai-angle');
+    const modelSelect = document.getElementById('seo-ai-model');
+    const badge = document.getElementById('seo-ai-status-badge');
+    const textArea = document.getElementById('seo-launch-text');
+
+    const angle = angleInput ? angleInput.value.trim() : '';
+    const model = modelSelect ? modelSelect.value : 'google/gemma-4-31b-it:free';
+    const channel = (typeof currentLaunchChannel !== 'undefined' && currentLaunchChannel) ? currentLaunchChannel : 'hacker_news';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Synthesizing...`;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+        const res = await fetch('/api/seo/ai-launch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                channel: channel,
+                angle: angle,
+                model: model
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            if (textArea) {
+                textArea.value = data.content;
+            }
+            if (badge) {
+                const modelShort = (data.model_used || model).split('/').pop();
+                const sourceTag = data.source === 'openrouter_ai' ? '✨ OpenRouter AI' : '📋 Verified Template';
+                badge.innerText = `${sourceTag} (${modelShort})`;
+                badge.className = data.source === 'openrouter_ai' 
+                    ? 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                    : 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20';
+            }
+        } else {
+            alert('Error generating copy: ' + (data.detail || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Synthesis failed: ' + e.message);
+    } finally {
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Synthesize with AI`;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+
