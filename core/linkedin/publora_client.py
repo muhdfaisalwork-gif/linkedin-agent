@@ -10,16 +10,30 @@ class PubloraClient:
 
     @property
     def api_key(self) -> Optional[str]:
-        return self._explicit_api_key or os.getenv("PUBLORA_API_KEY")
+        if self._explicit_api_key:
+            return self._explicit_api_key
+        try:
+            from core.llm.client import _get_db_setting
+            return os.getenv("PUBLORA_API_KEY") or _get_db_setting("PUBLORA_API_KEY")
+        except Exception:
+            return os.getenv("PUBLORA_API_KEY")
+
+    @property
+    def platform_id(self) -> Optional[str]:
+        try:
+            from core.llm.client import _get_db_setting
+            return os.getenv("LINKEDIN_PLATFORM_ID") or _get_db_setting("LINKEDIN_PLATFORM_ID")
+        except Exception:
+            return os.getenv("LINKEDIN_PLATFORM_ID")
 
     def is_configured(self) -> bool:
-        return bool(self.api_key and os.getenv("LINKEDIN_PLATFORM_ID"))
+        return bool(self.api_key and self.platform_id)
 
     def create_post(self, content: str, media_urls: Optional[list] = None) -> Dict[str, Any]:
         if not self.is_configured():
             raise RuntimeError("PUBLORA_API_KEY or LINKEDIN_PLATFORM_ID not set.")
 
-        platform_id = os.getenv("LINKEDIN_PLATFORM_ID")
+        platform_id = self.platform_id
         headers = {
             "x-publora-key": self.api_key,
             "Content-Type": "application/json"
@@ -40,7 +54,7 @@ class PubloraClient:
         if not self.is_configured():
             raise RuntimeError("PUBLORA_API_KEY not set.")
 
-        platform_id = os.getenv("LINKEDIN_PLATFORM_ID")
+        platform_id = self.platform_id
         headers = {
             "x-publora-key": self.api_key,
             "Content-Type": "application/json"

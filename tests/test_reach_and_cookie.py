@@ -170,3 +170,48 @@ def test_feed_engine_safe_metric_parsing():
     assert _parse_metric_count("1,250 reactions") == 1250
     assert _parse_metric_count("invalid string") == 0
 
+def test_reach_vision_custom_provider():
+    from core.reach.vision_analyzer import ReachVisionAnalyzer
+    from core.llm.client import UniversalLLMClient
+    from unittest.mock import patch, MagicMock
+    import tempfile
+    from PIL import Image
+
+    custom_client = UniversalLLMClient(provider="custom", api_key="test-custom-key")
+    analyzer = ReachVisionAnalyzer(custom_client)
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        tmp_path = tmp.name
+        img = Image.new("RGB", (10, 10), color="green")
+        img.save(tmp_path)
+
+    try:
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {"choices": [{"message": {"content": "Custom vision analysis result"}}]}
+            mock_post.return_value = mock_resp
+
+            res = analyzer.analyze_screenshot(tmp_path)
+            assert res["status"] == "success"
+            assert res["provider"] == "custom"
+            assert "Custom vision analysis" in res["analysis"]
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+def test_dispatcher_image_path_normalization():
+    from core.linkedin.dispatcher import LinkedInDispatcher
+    dispatcher = LinkedInDispatcher()
+
+    # Manual mode should always succeed and return clipboard_ready
+    res1 = dispatcher.publish_post("Test post", image_url="storage/images/sample.png")
+    assert res1["status"] == "manual"
+
+    res2 = dispatcher.publish_post("Test post", image_url="/storage/images/sample.png")
+    assert res2["status"] == "manual"
+
+    res3 = dispatcher.publish_post("Test post", image_url="storage\\images\\sample.png")
+    assert res3["status"] == "manual"
+
+

@@ -127,6 +127,11 @@ class BrainManager:
             SET tone = ?, cadence = ?, preferred_phrases = ?, banned_phrases = ?, cta_style = ?, author_bio = ?
             WHERE id = (SELECT id FROM voice_profile ORDER BY id DESC LIMIT 1)
         ''', (tone, cadence, preferred, banned, cta_style, bio))
+        if cursor.rowcount == 0:
+            cursor.execute('''
+                INSERT INTO voice_profile (tone, cadence, preferred_phrases, banned_phrases, cta_style, author_bio)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (tone, cadence, preferred, banned, cta_style, bio))
         conn.commit()
         conn.close()
 

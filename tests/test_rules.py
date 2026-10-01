@@ -42,6 +42,24 @@ def test_case_preserving_replacement():
     assert "help testing" in cleaned
     assert "EXAMINE" in cleaned or "Look closely at" in cleaned
 
+def test_assistant_preamble_stripping_preserves_human_sentences():
+    # Real assistant talk with preamble should strip preamble
+    with_preamble = "Sure, here is the post:\n\nOrder routing latency dropped to 420ms.\n\nLet's discuss how we eliminated mutex contention."
+    cleaned, _ = Humanizer.humanize_text(with_preamble)
+    assert not cleaned.startswith("Sure, here is")
+    assert "Order routing latency" in cleaned
+    assert "Let's discuss" in cleaned
+
+    # Natural human single-sentence reply starting with Let's or I will should NOT be deleted
+    single_sentence = "Let's connect next week to review the trade OS."
+    cleaned_single, _ = Humanizer.humanize_text(single_sentence)
+    assert cleaned_single == "Let's connect next week to review the trade OS."
+
+    i_will_sentence = "I will share our complete benchmarks tomorrow."
+    cleaned_i_will, _ = Humanizer.humanize_text(i_will_sentence)
+    assert cleaned_i_will == "I will share our complete benchmarks tomorrow."
+
+
 if __name__ == "__main__":
     test_banned_words_detection()
     test_humanizer_scrub()

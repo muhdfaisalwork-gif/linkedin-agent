@@ -32,8 +32,22 @@ def test_heuristic_evolution():
     heuristics_after = {h["formula_code"]: h["weight"] for h in brain.get_heuristics()}
     assert "F7" in heuristics_after
 
-if __name__ == "__main__":
-    test_brain_initialization_and_seeding()
-    test_story_retrieval_by_topic()
-    test_heuristic_evolution()
-    print("All Brain tests passed successfully!")
+def test_voice_profile_crud():
+    brain = BrainManager()
+    profile = brain.get_voice_profile()
+    assert "tone" in profile
+    assert "author_bio" in profile
+
+    brain.update_voice_profile(
+        tone="Engineering-first",
+        cadence="Compact",
+        preferred="shipped, tested",
+        banned="synergy",
+        cta_style="Numbered question",
+        bio="Lead Systems Architect"
+    )
+
+    updated = brain.get_voice_profile()
+    assert updated["tone"] == "Engineering-first"
+    assert updated["author_bio"] == "Lead Systems Architect"
+

@@ -90,3 +90,24 @@ def test_install_scripts_exist():
     with open(run_mcp, "r", encoding="utf-8") as f:
         run_content = f.read()
     assert "run_stdio_server" in run_content
+
+def test_openapi_comments_process_endpoint():
+    from fastapi.testclient import TestClient
+    from unittest.mock import patch
+    from api.app import app
+
+    client = TestClient(app)
+    with patch("core.skills.reply_handler.ReplyHandler.draft_reply") as mock_reply:
+        mock_reply.return_value = {
+            "reply_draft": "We achieved 420ms latency by tuning kernel buffers.",
+            "suggested_reaction": "LIKE",
+            "intent": "technical_insight"
+        }
+        res = client.post("/api/comments/process", json={
+            "post_context": "Trading systems latency",
+            "comment_text": "Did you measure the GC pause impact?",
+            "author_name": "Devin C."
+        })
+        assert res.status_code == 200
+        assert "420ms latency" in res.json()["reply_draft"]
+

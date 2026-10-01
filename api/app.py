@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from core.db.database import init_db
 from core.scheduler.agent_runner import AutonomousAgentRunner
@@ -103,3 +103,8 @@ def serve_dashboard():
     if os.path.exists(index_file):
         return FileResponse(index_file)
     return {"message": "LinkedIn Nexus Agent Studio API running. Open /static/index.html"}
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
+

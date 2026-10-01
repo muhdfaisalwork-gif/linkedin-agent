@@ -184,7 +184,36 @@ class ReachVisionAnalyzer:
                 else:
                     raise RuntimeError(f"Anthropic vision HTTP {res.status_code}: {res.text[:150]}")
 
-            # 5. OpenRouter (Default / Multi-Model)
+            # 5. Custom OpenAI-Compatible Local Endpoint (LM Studio, vLLM, LocalAI)
+            elif provider == "custom":
+                custom_base_url = (os.getenv("CUSTOM_BASE_URL") or _get_db_setting("CUSTOM_BASE_URL") or "http://localhost:1234/v1").rstrip("/")
+                key = self.llm.api_key
+                target_model = vision_model or self.llm.current_model or "local-model"
+                endpoint = f"{custom_base_url}/chat/completions"
+                headers = {"Content-Type": "application/json"}
+                if key:
+                    headers["Authorization"] = f"Bearer {key}"
+                payload = {
+                    "model": target_model,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}}
+                            ]
+                        }
+                    ],
+                    "temperature": 0.2
+                }
+                res = requests.post(endpoint, json=payload, headers=headers, timeout=45)
+                if res.status_code == 200:
+                    analysis_text = res.json()["choices"][0]["message"]["content"]
+                    return {"status": "success", "provider": "custom", "vision_model": target_model, "analysis": analysis_text}
+                else:
+                    raise RuntimeError(f"Custom vision HTTP {res.status_code}: {res.text[:150]}")
+
+            # 6. OpenRouter (Default / Multi-Model)
             else:
                 key = self.llm.api_key
                 if not key:

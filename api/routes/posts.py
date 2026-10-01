@@ -122,16 +122,18 @@ def delete_post(post_id: int):
         raise HTTPException(status_code=404, detail="Post not found")
 
     img_url = row["image_url"]
-    if img_url and img_url.startswith("/storage/images/"):
-        import os
-        img_name = img_url.split("/")[-1]
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        img_path = os.path.join(base_dir, "storage", "images", img_name)
-        if os.path.exists(img_path):
-            try:
-                os.remove(img_path)
-            except Exception:
-                pass
+    if img_url:
+        norm_img = str(img_url).replace("\\", "/").strip()
+        if norm_img.startswith("/storage/images/") or norm_img.startswith("storage/images/"):
+            import os
+            img_name = norm_img.split("/")[-1]
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            img_path = os.path.join(base_dir, "storage", "images", img_name)
+            if os.path.exists(img_path):
+                try:
+                    os.remove(img_path)
+                except Exception:
+                    pass
 
     cursor.execute("DELETE FROM posts WHERE id = ?", (post_id,))
     conn.commit()

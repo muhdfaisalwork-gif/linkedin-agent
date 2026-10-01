@@ -19,7 +19,8 @@ class SweepRequest(BaseModel):
 class ReplyRequest(BaseModel):
     post_context: str
     comment_text: str
-    commenter_name: str
+    commenter_name: Optional[str] = None
+    author_name: Optional[str] = None
     depth: int = 1
     top_level_urn: Optional[str] = None
 
@@ -33,12 +34,14 @@ def list_comments():
     return [dict(r) for r in rows]
 
 @router.post("/draft-reply")
+@router.post("/process")
 def draft_reply_endpoint(req: ReplyRequest):
     try:
+        author = req.commenter_name or req.author_name or "LinkedIn Member"
         reply_data = reply_handler.draft_reply(
             original_post=req.post_context,
             comment_text=req.comment_text,
-            commenter_name=req.commenter_name,
+            commenter_name=author,
             depth=req.depth,
             top_level_urn=req.top_level_urn
         )

@@ -72,7 +72,19 @@ REPLY: [reply draft]"""
         reply_match = re.search(r'\*{0,2}REPLY:\*{0,2}\s*([\s\S]+)', raw_res, re.IGNORECASE)
 
         if intent_match:
-            intent = intent_match.group(1).strip().lower().replace("*", "").replace("'", "")
+            intent_raw = intent_match.group(1).strip().lower().replace("*", "").replace("'", "").replace('"', "")
+            if "client" in intent_raw or "lead" in intent_raw or "inquiry" in intent_raw:
+                intent = "client_lead"
+            elif "partner" in intent_raw:
+                intent = "partnership"
+            elif "recruit" in intent_raw or "job" in intent_raw or "hiring" in intent_raw:
+                intent = "recruiter"
+            elif "peer" in intent_raw or "network" in intent_raw:
+                intent = "peer_networking"
+            elif "spam" in intent_raw or "pitch" in intent_raw:
+                intent = "spam_pitch"
+            else:
+                intent = intent_raw.replace(" ", "_")
         if reply_match:
             reply_draft = reply_match.group(1).strip()
 

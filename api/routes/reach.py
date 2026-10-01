@@ -93,7 +93,8 @@ def analyze_vision(req: VisionAnalyzeRequest):
     image_path = None
     if req.image_url:
         # Convert relative url to filesystem path
-        filename = os.path.basename(req.image_url)
+        clean_url = str(req.image_url).replace("\\", "/").split("?")[0]
+        filename = clean_url.split("/")[-1]
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         image_path = os.path.join(base_dir, "storage", "images", filename)
 

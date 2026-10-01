@@ -43,10 +43,11 @@ class LinkedInDispatcher:
             # Map storage image url to local absolute file path
             local_image = None
             if image_url:
-                if image_url.startswith("/storage/images/"):
-                    img_name = image_url.split("/")[-1]
+                norm_img = str(image_url).replace("\\", "/").strip()
+                if norm_img.startswith("/storage/images/") or norm_img.startswith("storage/images/"):
+                    img_name = norm_img.split("/")[-1]
                     local_image = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "storage", "images", img_name)
-                elif image_url.startswith("http://") or image_url.startswith("https://"):
+                elif norm_img.startswith("http://") or norm_img.startswith("https://"):
                     try:
                         import requests
                         import uuid

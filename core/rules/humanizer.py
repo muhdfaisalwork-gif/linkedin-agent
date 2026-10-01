@@ -161,13 +161,13 @@ class Humanizer:
 
         # Pass 2: Clean up generic openers & assistant preamble (including thinking chatter)
         lines = [l for l in cleaned.split('\n')]
-        while lines:
+        while lines and len(lines) > 1:
             first = lines[0].strip()
             if not first:
                 lines.pop(0)
                 continue
             if re.match(
-                r'^(the user wants|here is a|here[\'’]?s a|sure,? here|okay,? here|let me\b|let[\'’]?s\b|i will\b|i[\'’]?ll\b|to write\b|post draft:?|draft:?|headline:?|thought:?|system:?|requirements:?|outline:?|step \d+:?|[-*•]\s+)\b',
+                r'^(the user wants\b|here is (?:a|the)\b|here[\'’]?s (?:a|the)\b|sure,?\s*(?:here|i can|i will|let me|below)?[:\s]|okay,?\s*(?:here|i can|let me|below)?[:\s]|let me (?:draft|write|craft|create|break down|analyze|summarize|help)\b|let[\'’]?s (?:draft|write|craft|create|break down|analyze|look at the prompt)\b|(?:i will|i[\'’]?ll) (?:draft|write|craft|create|help you)\b|to write this\b|post draft:?|draft:?|headline:?|thought:?|system:?|requirements:?|outline:?|step \d+:?)\b',
                 first,
                 re.IGNORECASE
             ):
