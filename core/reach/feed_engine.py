@@ -58,11 +58,15 @@ class ReachFeedEngine:
             reactions = _parse_metric_count(p.get("reaction_count", 0))
             comments = _parse_metric_count(p.get("comment_count", 0))
 
-            # Avoid duplicates within recent scans
-            cursor.execute(
-                "SELECT id FROM scanned_feed_posts WHERE post_text = ? LIMIT 1",
-                (text,)
-            )
+            # Avoid duplicates within recent scans using URN or non-empty post text
+            if urn:
+                cursor.execute("SELECT id FROM scanned_feed_posts WHERE post_url = ? LIMIT 1", (urn,))
+            elif text:
+                cursor.execute("SELECT id FROM scanned_feed_posts WHERE post_text = ? LIMIT 1", (text,))
+            else:
+                # Distinct image-only post with no URN or text
+                cursor.execute("SELECT 0 WHERE 1=0")
+
             if not cursor.fetchone():
                 cursor.execute("""
                     INSERT INTO scanned_feed_posts (

@@ -34,7 +34,10 @@ class InboxHandler:
 
         history_str = ""
         if conversation_history:
-            history_str = "\n".join([f"{m['sender']}: {m['text']}" for m in conversation_history])
+            history_str = "\n".join([
+                f"{m.get('sender', m.get('role', m.get('author', 'User')))}: {m.get('text', m.get('content', m.get('message', '')))}"
+                for m in conversation_history if isinstance(m, dict)
+            ])
 
         system_prompt = RulesEngine.get_system_prompt(custom_voice=voice.get("tone", ""))
 

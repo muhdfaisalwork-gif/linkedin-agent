@@ -26,6 +26,7 @@ class SavePostRequest(BaseModel):
     post_id: Optional[int] = None
     topic: str
     hook_formula: str
+    founder_angle: Optional[str] = None
     content: str
     image_url: Optional[str] = None
     image_type: Optional[str] = None
@@ -79,22 +80,22 @@ def save_post(req: SavePostRequest):
     if req.post_id:
         cursor.execute('''
             UPDATE posts
-            SET topic = ?, hook_formula = ?, content = ?, image_url = ?, image_type = ?,
+            SET topic = ?, hook_formula = ?, founder_angle = ?, content = ?, image_url = ?, image_type = ?,
                 status = ?, scheduled_time = ?, flesch_score = ?, ai_tell_count = ?
             WHERE id = ?
-        ''', (req.topic, req.hook_formula, req.content, req.image_url, req.image_type, req.status, scheduled, req.flesch_score, req.ai_tell_count, req.post_id))
+        ''', (req.topic, req.hook_formula, req.founder_angle, req.content, req.image_url, req.image_type, req.status, scheduled, req.flesch_score, req.ai_tell_count, req.post_id))
         if cursor.rowcount == 0:
             cursor.execute('''
-                INSERT INTO posts (id, topic, hook_formula, content, image_url, image_type, status, scheduled_time, flesch_score, ai_tell_count)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (req.post_id, req.topic, req.hook_formula, req.content, req.image_url, req.image_type, req.status, scheduled, req.flesch_score, req.ai_tell_count))
+                INSERT INTO posts (id, topic, hook_formula, founder_angle, content, image_url, image_type, status, scheduled_time, flesch_score, ai_tell_count)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (req.post_id, req.topic, req.hook_formula, req.founder_angle, req.content, req.image_url, req.image_type, req.status, scheduled, req.flesch_score, req.ai_tell_count))
         conn.commit()
         post_id = req.post_id
     else:
         cursor.execute('''
-            INSERT INTO posts (topic, hook_formula, content, image_url, image_type, status, scheduled_time, flesch_score, ai_tell_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (req.topic, req.hook_formula, req.content, req.image_url, req.image_type, req.status, scheduled, req.flesch_score, req.ai_tell_count))
+            INSERT INTO posts (topic, hook_formula, founder_angle, content, image_url, image_type, status, scheduled_time, flesch_score, ai_tell_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (req.topic, req.hook_formula, req.founder_angle, req.content, req.image_url, req.image_type, req.status, scheduled, req.flesch_score, req.ai_tell_count))
         conn.commit()
         post_id = cursor.lastrowid
     conn.close()

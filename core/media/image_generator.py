@@ -53,7 +53,9 @@ class ImageGenerator:
         author_name: str = "Founder & Architect"
     ) -> Dict[str, str]:
         """Creates either an AI art illustration or a quote card based on post content."""
-        if visual_type == "quote_card":
+        if visual_type in ("none", None, ""):
+            return {"type": "none", "url": None}
+        elif visual_type == "quote_card":
             url = cls.generate_quote_card(hook, author=author_name)
             return {"type": "quote_card", "url": url}
         else:

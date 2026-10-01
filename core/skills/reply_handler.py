@@ -74,9 +74,11 @@ class ReplyHandler:
         voice = self.brain.get_voice_profile()
         system_prompt = RulesEngine.get_system_prompt(custom_voice=voice.get("tone", ""))
 
+        post_ctx = (original_post or "")[:300]
+        author = commenter_name or "LinkedIn Member"
         prompt = f"""Draft a reply to this LinkedIn comment:
-ORIGINAL POST CONTEXT: {original_post[:300]}...
-COMMENT BY {commenter_name}: "{comment_text}"
+ORIGINAL POST CONTEXT: {post_ctx}...
+COMMENT BY {author}: "{comment_text}"
 
 REQUIREMENTS:
 1. Length: 150 to 300 characters. Tight, direct, conversational.
