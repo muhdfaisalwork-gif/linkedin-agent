@@ -29,8 +29,9 @@ Return:
         analysis = self.llm.generate_text(prompt, system_prompt=system_prompt, temperature=0.5)
         cleaned_analysis, audit = Humanizer.humanize_text(analysis)
 
+        sample = text if len(text) <= 200 else text[:200] + "..."
         return {
-            "source_sample": text[:200] + "...",
+            "source_sample": sample,
             "formula_breakdown": cleaned_analysis,
             "audit": audit
         }

@@ -118,7 +118,7 @@ class OpenRouterProvider(BaseLLMProvider):
                         choice = choices[0] if (choices and isinstance(choices, list)) else {}
                         msg = choice.get("message", {}) if isinstance(choice, dict) else {}
                         content = msg.get("content") or (choice.get("text") if isinstance(choice, dict) else "") or (msg.get("reasoning") if isinstance(msg, dict) else "") or ""
-                        if not content and choices and len(choices) > 0:
+                        if not content:
                             last_error = f"Model {model_candidate} returned empty content"
                             break
 

@@ -110,3 +110,53 @@ def test_openrouter_backwards_compatibility():
     assert isinstance(client, UniversalLLMClient)
     assert hasattr(client, "chat_completion")
     assert hasattr(client, "generate_text")
+
+def test_openai_empty_choices_handling():
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"choices": []}
+        provider = OpenAIProvider(api_key="sk-test", model="gpt-4o")
+        with pytest.raises(RuntimeError, match="no choices"):
+            provider.chat_completion([{"role": "user", "content": "Hi"}])
+
+def test_gemini_blocked_prompt_handling():
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "choices": [],
+            "promptFeedback": {"blockReason": "SAFETY"}
+        }
+        provider = GeminiProvider(api_key="AIzaSyTest", model="gemini-2.0-flash")
+        with pytest.raises(RuntimeError, match="blocked prompt: SAFETY"):
+            provider.chat_completion([{"role": "user", "content": "Hi"}])
+
+def test_custom_empty_choices_handling():
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"choices": []}
+        provider = CustomOpenAICompatibleProvider(base_url="http://localhost:1234/v1")
+        with pytest.raises(RuntimeError, match="no choices"):
+            provider.chat_completion([{"role": "user", "content": "Hi"}])
+
+def test_ollama_unclosed_think_tag_stripping():
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "message": {
+                "role": "assistant",
+                "content": "<think>Cut off mid-reasoning without closing tag"
+            }
+        }
+        provider = OllamaProvider(base_url="http://localhost:11434")
+        res = provider.chat_completion([{"role": "user", "content": "Hi"}])
+        assert res["content"] == ""
+
+def test_universal_llm_per_provider_model_lookup():
+    client = UniversalLLMClient()
+    gemini_prov = client.get_provider_instance("gemini")
+    assert gemini_prov.name == "gemini"
+    assert "gemini" in gemini_prov.model.lower()
+
+    anthropic_prov = client.get_provider_instance("anthropic")
+    assert anthropic_prov.name == "anthropic"
+    assert "claude" in anthropic_prov.model.lower()

@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from typing import List, Dict, Any, Optional
 from .base import BaseLLMProvider
@@ -83,8 +84,8 @@ class OllamaProvider(BaseLLMProvider):
                 msg = data.get("message", {})
                 content = msg.get("content", "")
                 # Clean DeepSeek R1 / reasoning tags if present
-                if "</think>" in content:
-                    content = content.split("</think>")[-1].strip()
+                if "<think>" in content or "</think>" in content:
+                    content = re.sub(r'<think>.*?(?:</think>|$)', '', content, flags=re.DOTALL).strip()
                 return {
                     "content": content,
                     "model_used": target_model,

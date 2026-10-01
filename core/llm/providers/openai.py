@@ -78,8 +78,11 @@ class OpenAIProvider(BaseLLMProvider):
             )
             if res.status_code == 200:
                 data = res.json()
-                choice = data["choices"][0]["message"]
-                content = choice.get("content", "")
+                choices = data.get("choices", [])
+                if not choices:
+                    raise RuntimeError(f"OpenAI returned no choices: {data}")
+                choice = choices[0].get("message", {})
+                content = choice.get("content") or choice.get("refusal") or ""
                 return {
                     "content": content,
                     "model_used": target_model,

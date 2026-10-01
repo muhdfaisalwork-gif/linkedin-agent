@@ -59,64 +59,70 @@ class UniversalLLMClient:
         provider = (db_val or env_val or "openrouter").lower()
         return provider
 
-    @property
-    def current_model(self) -> str:
-        provider = self.active_provider_name
+    def get_model_for_provider(self, provider: Optional[str] = None) -> str:
+        prov = (provider or self.active_provider_name).lower()
         if self._explicit_model:
             return self._explicit_model
-        if provider == "ollama":
+        if prov == "ollama":
             return _get_db_setting("OLLAMA_MODEL") or os.getenv("OLLAMA_MODEL") or "llama3.2:latest"
-        elif provider == "openai":
+        elif prov == "openai":
             return _get_db_setting("OPENAI_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o"
-        elif provider == "anthropic":
+        elif prov == "anthropic":
             return _get_db_setting("ANTHROPIC_MODEL") or os.getenv("ANTHROPIC_MODEL") or "claude-3-5-sonnet-20241022"
-        elif provider == "gemini":
+        elif prov == "gemini":
             return _get_db_setting("GEMINI_MODEL") or os.getenv("GEMINI_MODEL") or "gemini-2.0-flash"
-        elif provider == "custom":
+        elif prov == "custom":
             return _get_db_setting("CUSTOM_MODEL") or os.getenv("CUSTOM_MODEL") or "local-model"
         else:
             return _get_db_setting("OPENROUTER_MODEL") or os.getenv("OPENROUTER_MODEL") or "google/gemma-4-31b-it:free"
 
     @property
-    def api_key(self) -> Optional[str]:
-        provider = self.active_provider_name
+    def current_model(self) -> str:
+        return self.get_model_for_provider(self.active_provider_name)
+
+    def get_api_key_for_provider(self, provider: Optional[str] = None) -> Optional[str]:
+        prov = (provider or self.active_provider_name).lower()
         if self._explicit_api_key:
             return self._explicit_api_key
-        if provider == "openai":
+        if prov == "openai":
             return _get_db_setting("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-        elif provider == "anthropic":
+        elif prov == "anthropic":
             return _get_db_setting("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
-        elif provider == "gemini":
+        elif prov == "gemini":
             return _get_db_setting("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
-        elif provider == "custom":
+        elif prov == "custom":
             return _get_db_setting("CUSTOM_API_KEY") or os.getenv("CUSTOM_API_KEY")
-        elif provider == "ollama":
+        elif prov == "ollama":
             return None
         else:
             return _get_db_setting("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
 
+    @property
+    def api_key(self) -> Optional[str]:
+        return self.get_api_key_for_provider(self.active_provider_name)
+
     def get_provider_instance(self, provider_name: Optional[str] = None) -> BaseLLMProvider:
         name = (provider_name or self.active_provider_name).lower()
-        model = self.current_model
+        model = self.get_model_for_provider(name)
 
         if name == "ollama":
             base_url = self._explicit_base_url or _get_db_setting("OLLAMA_BASE_URL") or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
             return OllamaProvider(base_url=base_url, model=model)
         elif name == "openai":
-            key = self._explicit_api_key or _get_db_setting("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+            key = self.get_api_key_for_provider(name)
             return OpenAIProvider(api_key=key, model=model)
         elif name == "anthropic":
-            key = self._explicit_api_key or _get_db_setting("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+            key = self.get_api_key_for_provider(name)
             return AnthropicProvider(api_key=key, model=model)
         elif name == "gemini":
-            key = self._explicit_api_key or _get_db_setting("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+            key = self.get_api_key_for_provider(name)
             return GeminiProvider(api_key=key, model=model)
         elif name == "custom":
             base_url = self._explicit_base_url or _get_db_setting("CUSTOM_BASE_URL") or os.getenv("CUSTOM_BASE_URL")
-            key = self._explicit_api_key or _get_db_setting("CUSTOM_API_KEY") or os.getenv("CUSTOM_API_KEY")
+            key = self.get_api_key_for_provider(name)
             return CustomOpenAICompatibleProvider(base_url=base_url, api_key=key, model=model)
         else:
-            key = self._explicit_api_key or _get_db_setting("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+            key = self.get_api_key_for_provider(name)
             return OpenRouterProvider(api_key=key, model=model)
 
     def chat_completion(

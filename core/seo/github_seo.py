@@ -144,7 +144,7 @@ class LinkedInNexusGitHubSEO:
         return """# 🚀 LinkedIn Nexus Agent — Autonomous Open-Source LinkedIn Studio & Reach Engine
 
 <p align="center">
-  <a href="https://github.com/muhdfaisalwork-gif/linkedin-agent/actions"><img src="https://img.shields.io/badge/Tests-61%2F61%20Passing-brightgreen?logo=github-actions&logoColor=white" alt="Tests"></a>
+  <a href="https://github.com/muhdfaisalwork-gif/linkedin-agent/actions"><img src="https://img.shields.io/badge/Tests-73%2F73%20Passing-brightgreen?logo=github-actions&logoColor=white" alt="Tests"></a>
   <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-Protocol%202024--11--05-blue?logo=anthropic&logoColor=white" alt="MCP Server"></a>
   <a href="https://ollama.com/"><img src="https://img.shields.io/badge/Ollama-100%25%20Offline%20Ready-black?logo=ollama&logoColor=white" alt="Ollama Local"></a>
   <a href="https://openrouter.ai/"><img src="https://img.shields.io/badge/OpenRouter-Free%20Models%20Included-purple" alt="OpenRouter"></a>

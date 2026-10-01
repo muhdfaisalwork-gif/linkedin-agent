@@ -72,7 +72,14 @@ class GeminiProvider(BaseLLMProvider):
             )
             if res.status_code == 200:
                 data = res.json()
-                choice = data["choices"][0]["message"]
+                choices = data.get("choices", [])
+                if not choices:
+                    feedback = data.get("promptFeedback", {})
+                    block_reason = feedback.get("blockReason")
+                    if block_reason:
+                        raise RuntimeError(f"Google Gemini blocked prompt: {block_reason}")
+                    raise RuntimeError(f"Google Gemini returned no choices: {data}")
+                choice = choices[0].get("message", {})
                 content = choice.get("content", "")
                 return {
                     "content": content,

@@ -70,7 +70,10 @@ class CustomOpenAICompatibleProvider(BaseLLMProvider):
             )
             if res.status_code == 200:
                 data = res.json()
-                choice = data["choices"][0]["message"]
+                choices = data.get("choices", [])
+                if not choices:
+                    raise RuntimeError(f"Custom LLM endpoint returned no choices: {data}")
+                choice = choices[0].get("message", {})
                 content = choice.get("content", "")
                 return {
                     "content": content,
