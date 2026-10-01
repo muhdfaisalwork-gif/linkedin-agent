@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub SEO Agent — Dashboard</title>
+    <style>
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --accent: #58a6ff; --green: #3fb950; --yellow: #d29922; --red: #f85149; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%); padding: 24px 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+        .header h1 { font-size: 24px; color: #fff; }
+        .header h1 span { color: var(--accent); }
+        .container { max-width: 1200px; margin: 32px auto; padding: 0 24px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+        .card h2 { font-size: 18px; margin-bottom: 16px; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .score-ring { width: 120px; height: 120px; border-radius: 50%; border: 6px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; margin: 16px auto; }
+        .score-ring.good { border-color: var(--green); color: var(--green); }
+        .score-ring.mid { border-color: var(--yellow); color: var(--yellow); }
+        .score-ring.bad { border-color: var(--red); color: var(--red); }
+        .checklist { list-style: none; }
+        .checklist li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .checklist li:last-child { border: none; }
+        .badge { display: inline-block; background: #21262d; padding: 4px 10px; border-radius: 16px; font-size: 13px; margin: 4px; }
+        button { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        select, input { background: #21262d; color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 14px; width: 100%; margin-bottom: 12px; }
+        .output { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 13px; max-height: 400px; overflow-y: auto; }
+        .full-width { grid-column: 1 / -1; }
+        .status { padding: 6px 12px; border-radius: 6px; display: inline-block; font-size: 13px; }
+        .status.ok { background: #1b3a26; color: var(--green); }
+        .status.loading { background: #1c2333; color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 <span>GitHub SEO Agent</span> — Dashboard</h1>
+        <span class="status ok" id="apiStatus">● Connected</span>
+    </div>
+
+    <div class="container">
+        <div class="grid">
+            <!-- Audit Card -->
+            <div class="card">
+                <h2>📊 SEO Audit</h2>
+                <div class="score-ring" id="scoreRing">--</div>
+                <p style="text-align:center;margin-bottom:16px;font-size:14px;" id="gradeLabel">Click to audit</p>
+                <button onclick="runAudit()" id="auditBtn">Run Audit</button>
+                <ul class="checklist" id="checklist"></ul>
+            </div>
+
+            <!-- Topics Card -->
+            <div class="card">
+                <h2>🏷️ Recommended Topics</h2>
+                <div id="topicsArea"><p>Run audit to see recommended topics.</p></div>
+                <div style="margin-top:16px">
+                    <h2>🚀 Launch Pack</h2>
+                    <select id="channelSelect">
+                        <option value="all">All Channels</option>
+                        <option value="hacker_news">Hacker News</option>
+                        <option value="reddit">Reddit</option>
+                        <option value="twitter_thread">Twitter/X Thread</option>
+                        <option value="product_hunt">Product Hunt</option>
+                        <option value="release_notes">Release Notes</option>
+                    </select>
+                    <button onclick="runLaunch()">Generate Launch Copy</button>
+                </div>
+            </div>
+
+            <!-- Output Card -->
+            <div class="card full-width">
+                <h2>📋 Output</h2>
+                <div class="output" id="output">Ready. Click an action above to begin.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = window.location.origin;
+
+        async function runAudit() {
+            const btn = document.getElementById('auditBtn');
+            btn.disabled = true; btn.textContent = 'Auditing...';
+            try {
+                const res = await fetch(`${API}/api/audit`);
+                const data = await res.json();
+                const ring = document.getElementById('scoreRing');
+                ring.textContent = data.score;
+                ring.className = 'score-ring ' + (data.score >= 80 ? 'good' : data.score >= 50 ? 'mid' : 'bad');
+                document.getElementById('gradeLabel').textContent = `Grade: ${data.grade}`;
+
+                const cl = document.getElementById('checklist');
+                cl.innerHTML = (data.checklist || []).map(c => `<li>✓ ${c}</li>`).join('');
+
+                const ta = document.getElementById('topicsArea');
+                ta.innerHTML = (data.recommended_topics || []).map(t => `<span class="badge">${t}</span>`).join('');
+
+                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('output').textContent = `Error: ${e.message}`;
+            }
+            btn.disabled = false; btn.textContent = 'Run Audit';
+        }
+
+        async function runLaunch() {
+            const channel = document.getElementById('channelSelect').value;
+            try {
+                const res = await fetch(`${API}/api/launch`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({channel})
+                });
+                const data = await res.json();
+                const lines = [];
+                for (const [ch, text] of Object.entries(data.packs || {})) {
+                    lines.push(`--- [${ch.toUpperCase()}] ---\n${text}\n`);
+                }
+                document.getElementById('output').textContent = lines.join('\n');
+            } catch (e) {
+                document.getElementById('output').textContent = `Error: ${e.message}`;
+            }
+        }
+
+        // Check API health on load
+        fetch(`${API}/health`).then(r => r.json()).then(d => {
+            document.getElementById('apiStatus').textContent = '● Connected';
+            document.getElementById('apiStatus').className = 'status ok';
+        }).catch(() => {
+            document.getElementById('apiStatus').textContent = '● Disconnected';
+            document.getElementById('apiStatus').className = 'status';
+            document.getElementById('apiStatus').style.background = '#3d1515';
+            document.getElementById('apiStatus').style.color = '#f85149';
+        });
+    </script>
+</body>
+</html>

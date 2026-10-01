@@ -1,0 +1,13 @@
+.env
+*.env.local
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+*.sqlite
+*.sqlite3
+*.backup
+.DS_Store
+Thumbs.db
