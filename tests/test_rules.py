@@ -59,6 +59,20 @@ def test_assistant_preamble_stripping_preserves_human_sentences():
     cleaned_i_will, _ = Humanizer.humanize_text(i_will_sentence)
     assert cleaned_i_will == "I will share our complete benchmarks tomorrow."
 
+def test_unclosed_tags_stripping():
+    # Model opened post but never closed it
+    truncated_post = "<post>\nSultrix Trade OS dropped latency from 1200ms to 420ms."
+    cleaned, _ = Humanizer.humanize_text(truncated_post)
+    assert not cleaned.startswith("<post>")
+    assert "Sultrix Trade OS dropped latency" in cleaned
+
+    # Model had stray think tag
+    stray_think = "<think>Planning the hook</think>\nHere is the real post about high throughput."
+    cleaned_think, _ = Humanizer.humanize_text(stray_think)
+    assert "<think>" not in cleaned_think
+    assert "</think>" not in cleaned_think
+    assert "Here is the real post" in cleaned_think
+
 
 if __name__ == "__main__":
     test_banned_words_detection()

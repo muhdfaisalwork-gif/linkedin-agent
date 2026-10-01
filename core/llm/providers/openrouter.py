@@ -130,6 +130,10 @@ class OpenRouterProvider(BaseLLMProvider):
                         }
 
                     elif res.status_code in (429, 502, 503, 504):
+                        res_lower = res.text.lower()
+                        if res.status_code == 429 and ("daily" in res_lower or "limit exceeded" in res_lower or "quota" in res_lower):
+                            last_error = f"Model {model_candidate} daily quota exceeded"
+                            break
                         wait = (1.5 ** attempt) + random.uniform(0.5, 1.5)
                         time.sleep(wait)
                         last_error = f"Model {model_candidate} returned {res.status_code}: {res.text[:150]}"

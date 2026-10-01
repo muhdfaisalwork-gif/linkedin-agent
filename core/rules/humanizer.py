@@ -129,6 +129,9 @@ class Humanizer:
         if cleaned.startswith('"') and cleaned.endswith('"') and len(cleaned) > 40:
             cleaned = cleaned[1:-1].strip()
 
+        # 8. Strip any unclosed or leftover <post> or <think> XML tags
+        cleaned = re.sub(r'</?(?:post|think)>', '', cleaned, flags=re.IGNORECASE).strip()
+
         return cleaned
 
     @staticmethod
