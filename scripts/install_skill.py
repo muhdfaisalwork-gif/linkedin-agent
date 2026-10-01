@@ -10,6 +10,18 @@ import sys
 import shutil
 from pathlib import Path
 
+# Ensure UTF-8 on Windows stdout/stderr
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 def install_agent_skill():
     project_root = Path(__file__).resolve().parent.parent
     source_skill = project_root / "skill" / "SKILL.md"
@@ -36,12 +48,12 @@ def install_agent_skill():
             pass
 
     print("=" * 60)
-    print("  LinkedIn Nexus Agent — Skill Installer")
+    print("  LinkedIn Nexus Agent -- Skill Installer")
     print("=" * 60)
     if installed_paths:
-        print("\n[✓ SUCCESS] Installed skill to:")
+        print("\n[OK SUCCESS] Installed skill to:")
         for p in installed_paths:
-            print(f"  • {p}")
+            print(f"  * {p}")
         print("\nYour AI assistant (Antigravity, Claude Code, OpenClaw) can now use 'linkedin-nexus'!")
     else:
         print("\nCould not automatically write to global skill locations. Copied to local .skills folder.")

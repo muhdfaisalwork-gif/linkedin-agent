@@ -27,3 +27,4 @@ storage/browser_profile/
 # OS artifacts
 .DS_Store
 Thumbs.db
+.skills/

@@ -49,9 +49,11 @@ def list_posts():
 @router.post("/generate")
 @router.post("/draft")
 def generate_post(req: GeneratePostRequest):
+    if not req.topic or not req.topic.strip():
+        raise HTTPException(status_code=400, detail="Topic is required to draft a post.")
     try:
         draft = post_writer.draft_post(
-            topic=req.topic,
+            topic=req.topic.strip(),
             hook_code=req.hook_code,
             founder_angle_code=req.founder_angle_code,
             target_length=req.target_length,

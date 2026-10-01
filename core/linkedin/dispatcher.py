@@ -11,7 +11,21 @@ class LinkedInDispatcher:
         self.publora = PubloraClient()
 
     def get_active_backend(self) -> str:
-        mode = os.getenv("LINKEDIN_EXECUTION_MODE", "manual").lower()
+        mode = os.getenv("LINKEDIN_EXECUTION_MODE")
+        if not mode:
+            try:
+                from core.db.database import get_connection
+                conn = get_connection()
+                c = conn.cursor()
+                c.execute("SELECT value FROM settings WHERE key = 'LINKEDIN_EXECUTION_MODE' LIMIT 1")
+                row = c.fetchone()
+                conn.close()
+                if row and row[0]:
+                    mode = row[0]
+            except Exception:
+                pass
+        mode = (mode or "manual").lower()
+
         if mode == "browser" and self.browser_agent.is_authenticated():
             return "browser"
         elif mode == "publora" and self.publora.is_configured():

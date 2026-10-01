@@ -44,7 +44,10 @@ class AutonomousAgentRunner:
 
         cursor.execute('''
             SELECT * FROM posts
-            WHERE status = 'scheduled' AND datetime(replace(scheduled_time, 'T', ' ')) <= datetime('now')
+            WHERE status = 'scheduled' AND (
+                datetime(replace(scheduled_time, 'T', ' ')) <= datetime('now', 'localtime')
+                OR datetime(replace(scheduled_time, 'T', ' ')) <= datetime('now')
+            )
         ''')
         due_posts = cursor.fetchall()
 

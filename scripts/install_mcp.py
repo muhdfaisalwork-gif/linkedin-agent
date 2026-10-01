@@ -13,6 +13,18 @@ import shutil
 from typing import Optional
 from pathlib import Path
 
+# Ensure UTF-8 on Windows stdout/stderr
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 def get_claude_desktop_config_path() -> Optional[Path]:
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
@@ -31,7 +43,7 @@ def install_for_claude_desktop():
     python_exe = sys.executable
 
     print("=" * 65)
-    print("  LinkedIn Nexus Agent — Model Context Protocol (MCP) Installer")
+    print("  LinkedIn Nexus Agent -- Model Context Protocol (MCP) Installer")
     print("=" * 65)
 
     nexus_server_config = {
@@ -66,7 +78,7 @@ def install_for_claude_desktop():
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=2)
 
-        print("    [✓ SUCCESS] 'linkedin-nexus' server installed in Claude Desktop!")
+        print("    [OK SUCCESS] 'linkedin-nexus' server installed in Claude Desktop!")
         print("    Restart Claude Desktop to use LinkedIn Nexus tools directly inside Claude.")
     else:
         print("    [!] Could not automatically determine Claude Desktop config location.")

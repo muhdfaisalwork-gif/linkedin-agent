@@ -422,10 +422,15 @@ class LinkedInNexusMCPServer:
 
 def run_stdio_server():
     """Runs the MCP server over standard input/output."""
-    # Ensure stdout does not mangle unicode
+    # Ensure stdout and stdin do not mangle unicode
     if hasattr(sys.stdout, 'reconfigure'):
         try:
             sys.stdout.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
+    if hasattr(sys.stdin, 'reconfigure'):
+        try:
+            sys.stdin.reconfigure(encoding='utf-8')
         except Exception:
             pass
 

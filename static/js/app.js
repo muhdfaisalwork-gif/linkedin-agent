@@ -430,12 +430,12 @@ function loadDraftIntoStudio(postId) {
 
     currentPostDraft = post;
     document.getElementById('post-topic').value = post.topic || '';
-    if (document.getElementById('post-formula') && post.hook_formula) {
+    const hookSelect = document.getElementById('post-hook');
+    if (hookSelect && post.hook_formula) {
         const code = post.hook_formula.split(' ')[0].trim();
-        const sel = document.getElementById('post-formula');
-        for (let i = 0; i < sel.options.length; i++) {
-            if (sel.options[i].value === code) {
-                sel.selectedIndex = i;
+        for (let i = 0; i < hookSelect.options.length; i++) {
+            if (hookSelect.options[i].value === code) {
+                hookSelect.selectedIndex = i;
                 break;
             }
         }
@@ -1377,9 +1377,10 @@ function renderScannedFeed(posts) {
 
 function remixPostIntoStudio(author, snippet) {
     switchTab('studio');
-    const topicInput = document.getElementById('input-topic');
+    const topicInput = document.getElementById('post-topic');
     if (topicInput) {
         topicInput.value = `Contrarian perspective on industry post by ${author}: "${snippet}..."`;
+        topicInput.focus();
     }
 }
 
