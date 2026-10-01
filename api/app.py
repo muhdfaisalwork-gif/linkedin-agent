@@ -9,7 +9,7 @@ from core.db.database import init_db
 from core.scheduler.agent_runner import AutonomousAgentRunner
 from core.mcp.server import LinkedInNexusMCPServer
 
-from api.routes import posts, profile, brain, comments, inbox, analytics, settings, planner, reach
+from api.routes import posts, profile, brain, comments, inbox, analytics, settings, planner, reach, seo
 
 runner = AutonomousAgentRunner(check_interval_seconds=60)
 mcp_server = LinkedInNexusMCPServer()
@@ -60,6 +60,7 @@ app.include_router(analytics.router)
 app.include_router(settings.router)
 app.include_router(planner.router)
 app.include_router(reach.router)
+app.include_router(seo.router)
 
 # Model Context Protocol (MCP) HTTP Endpoint
 @app.post("/mcp")

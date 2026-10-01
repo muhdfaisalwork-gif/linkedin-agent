@@ -54,6 +54,7 @@ function switchTab(tabId) {
     if (tabId === 'brain') { loadStoryBank(); loadVoiceProfile(); loadReflections(); }
     if (tabId === 'settings') loadSettings();
     if (tabId === 'reach') loadScannedFeed();
+    if (tabId === 'seo') { loadGitHubSEOAudit(); selectLaunchChannel('hacker_news'); }
 }
 
 // 1. ANALYTICS & REACH
@@ -1469,3 +1470,214 @@ async function inspectUrlWithReach() {
         }
     }
 }
+
+// 10. GITHUB SEO AGENT
+let cachedLaunchPacks = null;
+let currentLaunchChannel = 'hacker_news';
+
+async function loadGitHubSEOAudit() {
+    const scoreEl = document.getElementById('seo-score');
+    const gradeEl = document.getElementById('seo-grade');
+    const checklistEl = document.getElementById('seo-checklist');
+    const topicsEl = document.getElementById('seo-topics-container');
+    const cliBox = document.getElementById('seo-cli-box');
+    const btn = document.getElementById('btn-run-seo-audit');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Auditing...`;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+        const res = await fetch('/api/seo/audit');
+        const data = await res.json();
+
+        if (scoreEl) scoreEl.innerText = data.score;
+        if (gradeEl) gradeEl.innerText = `Grade ${data.grade}`;
+
+        if (checklistEl && data.checklist) {
+            checklistEl.innerHTML = data.checklist.map(item => {
+                const icon = item.status === 'pass'
+                    ? '<i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>'
+                    : (item.status === 'warning'
+                        ? '<i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0"></i>'
+                        : '<i data-lucide="x-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>');
+
+                const badgeClass = item.status === 'pass'
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    : (item.status === 'warning'
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        : 'bg-rose-500/20 text-rose-400 border-rose-500/30');
+
+                return `
+                    <div class="p-2.5 rounded-xl bg-dark-900 border border-dark-700/60 flex items-start gap-2.5">
+                        <div class="mt-0.5">${icon}</div>
+                        <div class="space-y-0.5 flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-1">
+                                <span class="font-bold text-slate-200 text-xs">${escapeHtml(item.item)}</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded border uppercase ${badgeClass}">${item.status}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">${escapeHtml(item.note)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        if (topicsEl && data.recommended_topics) {
+            topicsEl.innerHTML = data.recommended_topics.map(t => `
+                <span class="px-2 py-0.5 rounded-lg font-mono text-[10px] bg-dark-700 text-slate-300 border border-dark-600">
+                    #${escapeHtml(t)}
+                </span>
+            `).join('');
+        }
+
+        if (cliBox && data.gh_cli_command) {
+            cliBox.innerText = data.gh_cli_command;
+        }
+
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('SEO Audit error:', e);
+    } finally {
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-400"></i> Run Audit`;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+async function selectLaunchChannel(channel) {
+    currentLaunchChannel = channel;
+
+    // Toggle button styling
+    document.querySelectorAll('.launch-channel-btn').forEach(btn => {
+        btn.classList.remove('text-slate-200', 'bg-dark-700', 'border', 'border-dark-600');
+        btn.classList.add('text-slate-400');
+    });
+
+    const activeBtn = document.getElementById(`channel-btn-${channel}`);
+    if (activeBtn) {
+        activeBtn.classList.add('text-slate-200', 'bg-dark-700', 'border', 'border-dark-600');
+        activeBtn.classList.remove('text-slate-400');
+    }
+
+    const textarea = document.getElementById('seo-launch-text');
+
+    if (cachedLaunchPacks && cachedLaunchPacks[channel]) {
+        if (textarea) textarea.value = cachedLaunchPacks[channel];
+        return;
+    }
+
+    if (textarea) textarea.value = 'Generating tailored launch copy for ' + channel + '...';
+
+    try {
+        const res = await fetch('/api/seo/launch-pack', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel: 'all' })
+        });
+        const data = await res.json();
+        if (data.packs) {
+            cachedLaunchPacks = data.packs;
+            if (textarea && cachedLaunchPacks[channel]) {
+                textarea.value = cachedLaunchPacks[channel];
+            }
+        }
+    } catch (e) {
+        if (textarea) textarea.value = 'Failed to load launch copy: ' + e.message;
+    }
+}
+
+function copyLaunchPackText() {
+    const textarea = document.getElementById('seo-launch-text');
+    const copyBtn = document.getElementById('btn-copy-launch-pack');
+    if (!textarea || !textarea.value) return;
+
+    navigator.clipboard.writeText(textarea.value);
+
+    if (copyBtn) {
+        const orig = copyBtn.innerHTML;
+        copyBtn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-300"></i> Copied to Clipboard!`;
+        copyBtn.classList.add('bg-emerald-600');
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => {
+            copyBtn.innerHTML = orig;
+            copyBtn.classList.remove('bg-emerald-600');
+            if (window.lucide) lucide.createIcons();
+        }, 2000);
+    }
+}
+
+function copyTopicsCommand() {
+    const cliBox = document.getElementById('seo-cli-box');
+    if (cliBox) {
+        navigator.clipboard.writeText(cliBox.innerText.trim());
+        alert('Copied GitHub CLI command to clipboard!\nRun this in your terminal to tag your repository with high-intent topics.');
+    }
+}
+
+async function applyOptimizedReadme() {
+    if (!confirm('This will update README.md with the 100% SEO-optimized version (a backup README.md.backup will be created). Continue?')) return;
+
+    const btn = document.getElementById('btn-apply-seo-readme');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Applying...`;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+        const res = await fetch('/api/seo/optimize-readme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apply: true })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            alert('🎉 README.md successfully updated with the 100% SEO-optimized version!\nOriginal version safely backed up to README.md.backup.');
+            await loadGitHubSEOAudit();
+        } else {
+            alert('Error updating README: ' + (data.message || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Request failed: ' + e.message);
+    } finally {
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="file-check" class="w-3.5 h-3.5"></i> Apply SEO README`;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+async function installCommunityHealthFiles() {
+    const btn = document.getElementById('btn-install-community');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Installing...`;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+        const res = await fetch('/api/seo/install-community-files', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            alert('🎉 ' + data.message + '\nFiles:\n' + data.files_written.join('\n'));
+            await loadGitHubSEOAudit();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (e) {
+        alert('Request failed: ' + e.message);
+    } finally {
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Install Community Files`;
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+

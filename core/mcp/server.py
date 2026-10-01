@@ -161,6 +161,29 @@ class LinkedInNexusMCPServer:
                     "type": "object",
                     "properties": {}
                 }
+            },
+            {
+                "name": "audit_github_seo",
+                "description": "Audits LinkedIn Nexus Agent repository discoverability, ranking factors, keyword density, and returns a 0-100 GitHub SEO health score.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "generate_github_launch_pack",
+                "description": "Generates tailored viral launch copy for Hacker News (Show HN), Reddit (r/LocalLLaMA, r/selfhosted), Twitter/X thread, or GitHub Release notes.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "channel": {
+                            "type": "string",
+                            "enum": ["all", "hacker_news", "reddit_localllama", "reddit_selfhosted", "twitter_thread", "release_notes"],
+                            "description": "Target community channel for launch promotion.",
+                            "default": "all"
+                        }
+                    }
+                }
             }
         ]
 
@@ -272,6 +295,31 @@ class LinkedInNexusMCPServer:
                 f"• 82-Rule Writing Gate: ACTIVE\n"
                 f"• Agent Reach Eyes: ACTIVE"
             )
+
+        elif tool_name == "audit_github_seo":
+            from core.seo.github_seo import LinkedInNexusGitHubSEO
+            engine = LinkedInNexusGitHubSEO()
+            audit = engine.audit_repository()
+            lines = [
+                f"### LinkedIn Nexus Agent — GitHub SEO Audit Score: {audit['score']}/100 (Grade: {audit['grade']})\n",
+                "**Checklist Analysis**:"
+            ]
+            for c in audit["checklist"]:
+                icon = "✓" if c["status"] == "pass" else ("⚠️" if c["status"] == "warning" else "✗")
+                lines.append(f"- {icon} **{c['item']}**: {c['note']}")
+            lines.append(f"\n**Recommended Topics**: {', '.join(audit['recommended_topics'])}")
+            lines.append(f"\n**GitHub CLI Update Command**:\n`{audit['gh_cli_command']}`")
+            return "\n".join(lines)
+
+        elif tool_name == "generate_github_launch_pack":
+            from core.seo.github_seo import LinkedInNexusGitHubSEO
+            engine = LinkedInNexusGitHubSEO()
+            channel = arguments.get("channel", "all")
+            packs = engine.generate_launch_pack(channel=channel)
+            lines = [f"### LinkedIn Nexus Agent Launch Pack ({channel}):\n"]
+            for ch, text in packs.items():
+                lines.append(f"#### Channel: {ch.upper()}\n{text}\n\n---\n")
+            return "\n".join(lines)
 
         raise ValueError(f"Unknown tool: {tool_name}")
 
