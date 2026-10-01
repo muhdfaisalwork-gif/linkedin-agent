@@ -66,6 +66,14 @@ class GitHubSEOAgent:
                 except Exception:
                     pass
                 
+            github_dir = os.path.join(self.repo_dir, '.github')
+            github_files = []
+            if os.path.exists(github_dir) and os.path.isdir(github_dir):
+                try:
+                    github_files = [f.lower() for f in os.listdir(github_dir)]
+                except Exception:
+                    pass
+
             issue_template_dir = os.path.join(self.repo_dir, '.github', 'ISSUE_TEMPLATE')
             if os.path.exists(issue_template_dir) and os.path.isdir(issue_template_dir):
                 try:
@@ -73,15 +81,20 @@ class GitHubSEOAgent:
                         has_issue_templates = True
                 except Exception:
                     pass
-                
+            if not has_issue_templates and any(f.startswith(('issue_template', 'pull_request_template')) for f in github_files):
+                has_issue_templates = True
+
             try:
                 root_files = [f.lower() for f in os.listdir(self.repo_dir)]
-                if any(f.startswith('contributing') for f in root_files):
+                all_candidate_files = root_files + github_files
+                if any(f.startswith('contributing') for f in all_candidate_files):
                     has_contributing = True
-                if any(f.startswith('security') for f in root_files):
+                if any(f.startswith('security') for f in all_candidate_files):
                     has_security = True
-                if any(f.startswith('license') for f in root_files):
+                if any(f.startswith('license') for f in all_candidate_files):
                     has_license = True
+                if not has_issue_templates and any(f.startswith(('issue_template', 'pull_request_template')) for f in root_files):
+                    has_issue_templates = True
             except Exception:
                 pass
 
@@ -119,7 +132,7 @@ class GitHubSEOAgent:
 
     def generate_optimized_readme(self, project_name: str, tagline: str, features: List[str], tech_stack: List[str]) -> str:
         """Generates a search-optimized README template."""
-        topics = ", ".join([k['keyword'] for k in self.keywords])
+        topics = ", ".join([k.get('keyword', '') for k in self.keywords if k.get('keyword')]) or "developer tools and open-source automation"
         features_list = "\n".join([f"- {feat}" for feat in features])
         tech_list = "\n".join([f"- {tech}" for tech in tech_stack])
 
@@ -131,7 +144,7 @@ class GitHubSEOAgent:
             f"![GitHub stars](https://img.shields.io/github/stars/{self.repo_owner}/{self.repo_name}?style=social)",
             f"![GitHub forks](https://img.shields.io/github/forks/{self.repo_owner}/{self.repo_name}?style=social)",
             f"![License](https://img.shields.io/github/license/{self.repo_owner}/{self.repo_name})",
-            f"![CI](https://img.shields.io/github/workflow/status/{self.repo_owner}/{self.repo_name}/CI)",
+            f"![CI](https://img.shields.io/github/actions/workflow/status/{self.repo_owner}/{self.repo_name}/ci.yml?branch=main)",
             "",
             "## Overview",
             f"{project_name} is designed to help with {topics}.",
@@ -170,7 +183,7 @@ class GitHubSEOAgent:
     def generate_community_health_files(self) -> Dict[str, Any]:
         """Creates typical community health file contents."""
         return {
-            '.github/workflows/ci.yml': "name: CI\non: [push, pull_request]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - run: echo 'CI setup'",
+            '.github/workflows/ci.yml': "name: CI\non: [push, pull_request]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up Python\n        uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - run: echo 'CI setup'",
             '.github/ISSUE_TEMPLATE/bug_report.md': "---\nname: Bug report\nabout: Create a report to help us improve\ntitle: ''\nlabels: ''\nassignees: ''\n---\n\n**Describe the bug**",
             '.github/pull_request_template.md': "## Description\n\nFixes # (issue)",
             'CONTRIBUTING.md': "# Contributing\n\nWelcome to our project!...",

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "github-seo-agent" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "github-seo-agent" ]
 
 jobs:
   build:

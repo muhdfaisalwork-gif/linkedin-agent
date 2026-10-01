@@ -117,7 +117,7 @@ def ai_synthesized_launch(req: AILaunchRequest):
             return {"status": "success", "channel": req.channel, "source": "openrouter_ai", "result": res["result"], "model_used": res.get("model_used")}
         
         packs = engine.generate_launch_pack(channel=req.channel)
-        fallback_text = packs.get(req.channel) or list(packs.values())[0]
+        fallback_text = packs.get(req.channel) or (list(packs.values())[0] if packs else "")
         return {
             "status": "success",
             "channel": req.channel,
@@ -127,7 +127,7 @@ def ai_synthesized_launch(req: AILaunchRequest):
         }
     except Exception as e:
         packs = engine.generate_launch_pack(channel=req.channel)
-        fallback_text = packs.get(req.channel) or list(packs.values())[0]
+        fallback_text = packs.get(req.channel) or (list(packs.values())[0] if packs else "")
         return {
             "status": "success",
             "channel": req.channel,

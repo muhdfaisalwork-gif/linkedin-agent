@@ -236,3 +236,21 @@ def test_api_ai_launch_fallback():
         assert data["status"] == "success"
         assert data["source"] == "curated_fallback"
         assert "Show HN" in data["result"]
+
+def test_engine_github_dir_community_files_and_badges(tmp_path):
+    # Setup .github folder with CONTRIBUTING, SECURITY, and PR template
+    gh = tmp_path / ".github"
+    gh.mkdir(parents=True)
+    (gh / "CONTRIBUTING.md").write_text("# Contributing")
+    (gh / "SECURITY.md").write_text("# Security")
+    (gh / "PULL_REQUEST_TEMPLATE.md").write_text("# PR")
+    (tmp_path / "README.md").write_text("# Project\n" + "rich text " * 60)
+
+    engine = GitHubSEOAgent("myuser", "myrepo", repo_dir=str(tmp_path))
+    audit = engine.audit_repository()
+    assert "CONTRIBUTING.md exists" in audit["checklist"]
+    assert "SECURITY.md exists" in audit["checklist"]
+    assert "Issue/PR templates exist" in audit["checklist"]
+
+    readme = engine.generate_optimized_readme("MyProj", "Great tool", ["Speed"], ["Python"])
+    assert "actions/workflow/status/myuser/myrepo/ci.yml?branch=main" in readme
