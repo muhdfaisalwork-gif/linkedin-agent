@@ -16,12 +16,13 @@ class Reflector:
         # Fetch recent posts with analytics
         cursor.execute('''
             SELECT p.id, p.topic, p.hook_formula, p.content,
-                   COALESCE(a.impressions, 0) as impressions,
-                   COALESCE(a.likes, 0) as likes,
-                   COALESCE(a.comments, 0) as comments,
-                   COALESCE(a.reposts, 0) as reposts
+                   COALESCE(MAX(a.impressions), 0) as impressions,
+                   COALESCE(MAX(a.likes), 0) as likes,
+                   COALESCE(MAX(a.comments), 0) as comments,
+                   COALESCE(MAX(a.reposts), 0) as reposts
             FROM posts p
             LEFT JOIN post_analytics a ON p.id = a.post_id
+            GROUP BY p.id
             ORDER BY p.id DESC LIMIT 15
         ''')
         recent_posts = cursor.fetchall()

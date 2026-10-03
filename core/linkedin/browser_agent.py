@@ -365,7 +365,12 @@ class LinkedInBrowserAgent:
                 editor = page.locator("div.ql-editor, div[role='textbox'], div[contenteditable='true']").first
                 if editor.count() > 0:
                     editor.click()
-                    editor.fill(content)
+                    try:
+                        editor.fill(content)
+                    except Exception:
+                        page.keyboard.insert_text(content)
+                else:
+                    page.keyboard.insert_text(content)
                 page.wait_for_timeout(1000)
 
                 # Click Post button

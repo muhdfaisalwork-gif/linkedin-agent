@@ -46,7 +46,18 @@ class PubloraClient:
 
         try:
             res = requests.post(f"{self.BASE_URL}/create-post", headers=headers, json=payload, timeout=30)
-            return res.json()
+            if res.status_code in (200, 201):
+                try:
+                    data = res.json()
+                    if isinstance(data, dict):
+                        if "status" not in data:
+                            data["status"] = "success" if data.get("success", True) else "error"
+                        return data
+                    return {"status": "success", "data": data}
+                except Exception:
+                    return {"status": "success", "message": res.text}
+            else:
+                return {"status": "error", "message": f"Publora HTTP {res.status_code}: {res.text[:200]}"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
@@ -68,6 +79,17 @@ class PubloraClient:
 
         try:
             res = requests.post(f"{self.BASE_URL}/linkedin-comments", headers=headers, json=payload, timeout=30)
-            return res.json()
+            if res.status_code in (200, 201):
+                try:
+                    data = res.json()
+                    if isinstance(data, dict):
+                        if "status" not in data:
+                            data["status"] = "success" if data.get("success", True) else "error"
+                        return data
+                    return {"status": "success", "data": data}
+                except Exception:
+                    return {"status": "success", "message": res.text}
+            else:
+                return {"status": "error", "message": f"Publora HTTP {res.status_code}: {res.text[:200]}"}
         except Exception as e:
             return {"status": "error", "message": str(e)}

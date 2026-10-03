@@ -25,6 +25,19 @@ class ReachVisionAnalyzer:
         except Exception:
             return None
 
+    @staticmethod
+    def _extract_vision_choice_content(data: Dict[str, Any]) -> str:
+        choices = data.get("choices", [])
+        if not choices or not isinstance(choices, list):
+            feedback = data.get("promptFeedback", {})
+            if feedback.get("blockReason"):
+                raise RuntimeError(f"Vision prompt blocked: {feedback.get('blockReason')}")
+            raise RuntimeError(f"Vision provider returned no choices: {data}")
+        choice = choices[0] if isinstance(choices[0], dict) else {}
+        msg = choice.get("message", {}) if isinstance(choice, dict) else {}
+        content = msg.get("content") or choice.get("text") or ""
+        return str(content).strip()
+
     def analyze_screenshot(self, image_path: str, context_prompt: Optional[str] = None) -> Dict[str, Any]:
         """
         Sends the screenshot to a vision-capable LLM to visually critique layout,
@@ -76,8 +89,9 @@ class ReachVisionAnalyzer:
                 if res.status_code == 200:
                     data = res.json()
                     analysis_text = data.get("message", {}).get("content", "")
-                    if "</think>" in analysis_text:
-                        analysis_text = analysis_text.split("</think>")[-1].strip()
+                    if "<think>" in analysis_text or "</think>" in analysis_text:
+                        import re
+                        analysis_text = re.sub(r'<think>.*?(?:</think>|$)', '', analysis_text, flags=re.DOTALL).strip()
                     return {
                         "status": "success",
                         "provider": "ollama",
@@ -110,7 +124,7 @@ class ReachVisionAnalyzer:
                 headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
                 res = requests.post(endpoint, json=payload, headers=headers, timeout=45)
                 if res.status_code == 200:
-                    analysis_text = res.json()["choices"][0]["message"]["content"]
+                    analysis_text = self._extract_vision_choice_content(res.json())
                     return {"status": "success", "provider": "gemini", "vision_model": target_model, "analysis": analysis_text}
                 else:
                     raise RuntimeError(f"Gemini vision HTTP {res.status_code}: {res.text[:150]}")
@@ -138,7 +152,7 @@ class ReachVisionAnalyzer:
                 headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
                 res = requests.post(endpoint, json=payload, headers=headers, timeout=45)
                 if res.status_code == 200:
-                    analysis_text = res.json()["choices"][0]["message"]["content"]
+                    analysis_text = self._extract_vision_choice_content(res.json())
                     return {"status": "success", "provider": "openai", "vision_model": target_model, "analysis": analysis_text}
                 else:
                     raise RuntimeError(f"OpenAI vision HTTP {res.status_code}: {res.text[:150]}")
@@ -208,7 +222,7 @@ class ReachVisionAnalyzer:
                 }
                 res = requests.post(endpoint, json=payload, headers=headers, timeout=45)
                 if res.status_code == 200:
-                    analysis_text = res.json()["choices"][0]["message"]["content"]
+                    analysis_text = self._extract_vision_choice_content(res.json())
                     return {"status": "success", "provider": "custom", "vision_model": target_model, "analysis": analysis_text}
                 else:
                     raise RuntimeError(f"Custom vision HTTP {res.status_code}: {res.text[:150]}")
@@ -266,8 +280,7 @@ class ReachVisionAnalyzer:
                     timeout=35
                 )
                 if res.status_code == 200:
-                    data = res.json()
-                    analysis_text = data["choices"][0]["message"]["content"]
+                    analysis_text = self._extract_vision_choice_content(res.json())
                     return {
                         "status": "success",
                         "provider": "openrouter",

@@ -92,11 +92,16 @@ def analyze_vision(req: VisionAnalyzeRequest):
     """Analyzes a feed screenshot or custom image with multimodal vision AI."""
     image_path = None
     if req.image_url:
-        # Convert relative url to filesystem path
-        clean_url = str(req.image_url).replace("\\", "/").split("?")[0]
-        filename = clean_url.split("/")[-1]
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        image_path = os.path.join(base_dir, "storage", "images", filename)
+        if os.path.isabs(req.image_url) and os.path.exists(req.image_url):
+            image_path = req.image_url
+        else:
+            # Convert relative url to filesystem path
+            clean_url = str(req.image_url).replace("\\", "/").split("?")[0]
+            filename = clean_url.split("/")[-1]
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            candidate = os.path.join(base_dir, "storage", "images", filename)
+            if os.path.exists(candidate):
+                image_path = candidate
 
     if not image_path or not os.path.exists(image_path):
         # Default to latest feed screenshot

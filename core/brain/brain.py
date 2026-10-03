@@ -176,12 +176,16 @@ class BrainManager:
                 eng_points = likes + (comments * 2.5) + (reposts * 3) + (saves * 2)
                 rate = (eng_points / max(1, impressions)) * 100.0 if impressions > 0 else (eng_points * 0.1)
 
-                new_count = h["usage_count"] + 1
-                new_avg = ((h["avg_engagement_rate"] * h["usage_count"]) + rate) / new_count
+                old_count = h["usage_count"] or 0
+                old_avg = h["avg_engagement_rate"] or 0.0
+                old_weight = h["weight"] if h["weight"] is not None else 1.0
+
+                new_count = old_count + 1
+                new_avg = ((old_avg * old_count) + rate) / new_count
 
                 # Dynamic weight evolution (Bayesian adjustment)
                 weight_delta = 0.05 if rate > 2.5 else (-0.03 if rate < 1.0 else 0.01)
-                new_weight = round(max(0.5, min(2.5, h["weight"] + weight_delta)), 2)
+                new_weight = round(max(0.5, min(2.5, old_weight + weight_delta)), 2)
 
                 cursor.execute('''
                     UPDATE heuristics

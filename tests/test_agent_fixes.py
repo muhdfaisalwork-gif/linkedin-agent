@@ -146,6 +146,77 @@ def test_inbox_handler_irregular_history_keys():
     assert res["intent"] == "client_lead"
     assert "quick call" in res["reply_draft"]
 
+def test_heuristics_null_safeguards_in_record_post_performance():
+    from core.brain.brain import BrainManager
+    conn = get_connection()
+    c = conn.cursor()
+    # Insert or update a heuristic with NULL usage_count and avg_engagement_rate
+    c.execute("INSERT OR REPLACE INTO heuristics (formula_code, formula_name, weight, usage_count, avg_engagement_rate) VALUES (?, ?, ?, NULL, NULL)",
+              ("F99", "Test Null Formula", 1.0))
+    conn.commit()
+    conn.close()
+
+    brain = BrainManager()
+    # Record performance should not raise TypeError
+    brain.record_post_performance(post_id=99999, impressions=1000, likes=50, comments=10, reposts=5, saves=8)
+
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT usage_count, avg_engagement_rate, weight FROM heuristics WHERE formula_code = ?", ("F99",))
+    row = c.fetchone()
+    # Clean up test records
+    c.execute("DELETE FROM heuristics WHERE formula_code = ?", ("F99",))
+    c.execute("DELETE FROM posts WHERE id = ?", (99999,))
+    conn.commit()
+    conn.close()
+
+    assert row is not None
+
+def test_publora_create_post_normalization():
+    from core.linkedin.publora_client import PubloraClient
+    from unittest.mock import patch, MagicMock
+
+    client = PubloraClient(api_key="test-key")
+    client._explicit_api_key = "test-key"
+    with patch.object(PubloraClient, "platform_id", "urn:li:organization:123"):
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {"id": "pub_12345", "success": True}
+            mock_post.return_value = mock_resp
+
+            res = client.create_post("Hello Publora")
+            assert res["status"] == "success"
+            assert res["id"] == "pub_12345"
+
+def test_reflector_group_by_post_deduplication():
+    from core.brain.reflector import Reflector
+    from unittest.mock import MagicMock
+
+    mock_llm = MagicMock()
+    mock_llm.generate_text.return_value = "Learnings from posts."
+    reflector = Reflector(mock_llm)
+
+    # Insert post with multiple analytics entries
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("INSERT INTO posts (id, topic, hook_formula, content, status) VALUES (88888, 'Dedup Topic', 'F7', 'Content', 'published')")
+    c.execute("INSERT INTO post_analytics (post_id, impressions, likes, comments, reposts, saves) VALUES (88888, 100, 10, 2, 1, 0)")
+    c.execute("INSERT INTO post_analytics (post_id, impressions, likes, comments, reposts, saves) VALUES (88888, 200, 20, 4, 2, 1)")
+    conn.commit()
+    conn.close()
+
+    try:
+        res = reflector.run_reflection_cycle()
+        assert res["status"] == "success"
+    finally:
+        conn = get_connection()
+        c = conn.cursor()
+        c.execute("DELETE FROM posts WHERE id = 88888")
+        c.execute("DELETE FROM post_analytics WHERE post_id = 88888")
+        conn.commit()
+        conn.close()
+
 if __name__ == "__main__":
     test_flesch_with_numbers_and_tech_terms()
     test_save_post_with_empty_scheduled_time()
@@ -156,4 +227,7 @@ if __name__ == "__main__":
     test_image_generator_none_type()
     test_reply_handler_none_original_post()
     test_inbox_handler_irregular_history_keys()
+    test_heuristics_null_safeguards_in_record_post_performance()
+    test_publora_create_post_normalization()
+    test_reflector_group_by_post_deduplication()
     print("All agent fixes tests passed!")
