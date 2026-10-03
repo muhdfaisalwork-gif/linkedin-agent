@@ -39,7 +39,10 @@ class GitHubSEOAgent:
         has_comparison = False
         has_license = False
 
-        if self.repo_dir and os.path.exists(self.repo_dir):
+        keywords_found = []
+        keywords_missing = []
+
+        if self.repo_dir and os.path.exists(self.repo_dir) and os.path.isdir(self.repo_dir):
             readme_path = os.path.join(self.repo_dir, 'README.md')
             if os.path.exists(readme_path):
                 has_readme = True
@@ -55,6 +58,15 @@ class GitHubSEOAgent:
                             
                         if 'vs' in content.lower() or 'comparison' in content.lower() or 'competitor' in content.lower():
                             has_comparison = True
+
+                        content_lower = content.lower()
+                        for k in self.keywords:
+                            kw = (k.get('keyword', '') if isinstance(k, dict) else str(k)).lower()
+                            if kw:
+                                if kw in content_lower:
+                                    keywords_found.append(kw)
+                                else:
+                                    keywords_missing.append(kw)
                 except Exception:
                     pass
 
@@ -115,11 +127,18 @@ class GitHubSEOAgent:
         elif score >= 60: grade = 'C'
         elif score >= 50: grade = 'D'
 
+        recommended_topics = [
+            k.get('keyword', str(k)) if isinstance(k, dict) else str(k)
+            for k in self.keywords
+        ]
+
         return {
             'score': score,
             'grade': grade,
             'checklist': checklist,
-            'recommended_topics': [k['keyword'] for k in self.keywords]
+            'recommended_topics': [t for t in recommended_topics if t],
+            'keywords_found': keywords_found,
+            'keywords_missing': keywords_missing
         }
 
     def set_keywords(self, keywords: List[Dict]):

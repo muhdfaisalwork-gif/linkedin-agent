@@ -254,3 +254,32 @@ def test_engine_github_dir_community_files_and_badges(tmp_path):
 
     readme = engine.generate_optimized_readme("MyProj", "Great tool", ["Speed"], ["Python"])
     assert "actions/workflow/status/myuser/myrepo/ci.yml?branch=main" in readme
+
+def test_mcp_generate_readme_tool():
+    server = GitHubSEOMCPServer()
+    resp = server.handle_request({
+        "jsonrpc": "2.0", "id": 6, "method": "tools/call",
+        "params": {
+            "name": "generate_readme",
+            "arguments": {
+                "project_name": "MCP Tool Test",
+                "tagline": "Fast tool",
+                "features": ["Speed", "Zero Latency"],
+                "tech_stack": ["Python", "FastAPI"]
+            }
+        }
+    })
+    assert "result" in resp
+    text = resp["result"]["content"][0]["text"]
+    assert "# MCP Tool Test" in text
+    assert "Zero Latency" in text
+
+def test_engine_keyword_coverage_tracking(tmp_path):
+    readme_text = "# Sample Project\nAn open-source automation tool with python and cli support."
+    (tmp_path / "README.md").write_text(readme_text)
+    engine = GitHubSEOAgent("test", "test", repo_dir=str(tmp_path))
+    audit = engine.audit_repository()
+    assert "keywords_found" in audit
+    assert "keywords_missing" in audit
+    assert "open-source" in audit["keywords_found"]
+    assert "python" in audit["keywords_found"]

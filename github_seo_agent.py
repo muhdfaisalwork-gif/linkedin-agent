@@ -71,6 +71,7 @@ def main():
     launch_p.add_argument("--ai", action="store_true", help="Use OpenRouter free models (Gemma 4 / Nemotron)")
     launch_p.add_argument("--angle", default="", help="Custom strategic angle")
     launch_p.add_argument("--model", default=None, help="OpenRouter model ID")
+    launch_p.add_argument("--features", default="open-source", help="Comma-separated project features for launch copy")
     launch_p.add_argument("--owner", default=DEFAULT_OWNER)
     launch_p.add_argument("--name", default=DEFAULT_NAME)
 
@@ -117,9 +118,10 @@ def main():
             from core.ai_synthesizer import AISynthesizer
             synth = AISynthesizer(model=args.model or "google/gemma-4-31b-it:free")
             repo_url = f"https://github.com/{args.owner}/{args.name}"
+            features_list = [f.strip() for f in args.features.split(",") if f.strip()] or ["open-source"]
             channels = [args.channel] if args.channel != "all" else ["hacker_news", "reddit", "twitter_thread", "product_hunt", "release_notes"]
             for ch in channels:
-                res = synth.synthesize_launch_copy(repo_url, args.name, ["open-source"], ch, args.angle)
+                res = synth.synthesize_launch_copy(repo_url, args.name, features_list, ch, args.angle)
                 source = "AI" if "result" in res else "Error"
                 print(f"\n--- [{ch.upper()}] (Source: {source}) ---")
                 print(res.get("result", res.get("error", "Unknown error")))

@@ -58,6 +58,35 @@ class GitHubSEOMCPServer:
                     "type": "object",
                     "properties": {}
                 }
+            },
+            {
+                "name": "generate_readme",
+                "description": "Generates a search-optimized, high-converting README template with Shields.io badges, features, comparison table, and tech stack.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "project_name": {
+                            "type": "string",
+                            "description": "Project title"
+                        },
+                        "tagline": {
+                            "type": "string",
+                            "description": "One-sentence project hook/tagline",
+                            "default": "An awesome open-source project"
+                        },
+                        "features": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of core features"
+                        },
+                        "tech_stack": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Technologies and libraries used"
+                        }
+                    },
+                    "required": ["project_name"]
+                }
             }
         ]
 
@@ -91,6 +120,14 @@ class GitHubSEOMCPServer:
             for path in files:
                 lines.append(f"- {path}")
             return "\n".join(lines)
+
+        elif name == "generate_readme":
+            project_name = arguments.get("project_name", self.agent.repo_name)
+            tagline = arguments.get("tagline", "An awesome open-source project")
+            features = arguments.get("features") or ["High Performance", "Open Source"]
+            tech_stack = arguments.get("tech_stack") or ["Python"]
+            readme_text = self.agent.generate_optimized_readme(project_name, tagline, features, tech_stack)
+            return readme_text
 
         raise ValueError(f"Unknown tool: {name}")
 
