@@ -57,8 +57,8 @@ To add the GitHub SEO Agent to your Claude Desktop configuration:
 
 ## 🏆 Showcase
 
-Built to promote **LinkedIn Nexus Agent**. 
-Check it out here: [https://github.com/muhdfaisalwork-gif/linkedin-agent](https://github.com/muhdfaisalwork-gif/linkedin-agent)
+- **LinkedIn Nexus Agent**: [https://github.com/muhdfaisalwork-gif/linkedin-agent](https://github.com/muhdfaisalwork-gif/linkedin-agent) — Autonomous LinkedIn Studio & Reach Engine
+- **ShadowStream**: [https://github.com/muhdfaisalwork-gif/ShadowStream](https://github.com/muhdfaisalwork-gif/ShadowStream) — Edge-Accelerated Open-Source Streaming Platform
 
 ## 🏗️ Architecture
 
