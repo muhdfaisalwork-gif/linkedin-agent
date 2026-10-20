@@ -81,6 +81,7 @@ To add the GitHub SEO Agent to your Claude Desktop configuration:
 
 - **LinkedIn Nexus Agent**: [https://github.com/muhdfaisalwork-gif/linkedin-agent](https://github.com/muhdfaisalwork-gif/linkedin-agent) — Autonomous LinkedIn Studio & Reach Engine
 - **ShadowStream**: [https://github.com/muhdfaisalwork-gif/ShadowStream](https://github.com/muhdfaisalwork-gif/ShadowStream) — Edge-Accelerated Open-Source Streaming Platform
+- **Shadow Voice**: [https://github.com/muhdfaisalwork-gif/shadow-voice](https://github.com/muhdfaisalwork-gif/shadow-voice) — Dialer-Agnostic AI Voice Agent Platform with Built-in Softphone Hub, Asterisk AudioSocket, VICIdial CTI, and Autonomous Cognitive Brain
 
 ## 🏗️ Architecture
 
