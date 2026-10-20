@@ -1,0 +1,41 @@
+name: Publish to GitHub Packages
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+  push:
+    branches: [main, github-seo-agent]
+    paths:
+      - 'package.json'
+      - 'index.js'
+      - 'bin/**'
+      - '.npmrc'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@muhdfaisalwork-gif'
+
+      - name: Verify package configuration
+        run: |
+          node -e "const pkg = require('./package.json'); console.log('Publishing:', pkg.name, 'v' + pkg.version);"
+          npm pack --dry-run
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

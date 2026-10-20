@@ -1,0 +1,51 @@
+{
+  "name": "@muhdfaisalwork-gif/github-seo-agent",
+  "version": "1.0.0",
+  "description": "Open-Source GitHub Repository Discoverability Engine, Launch Copy Synthesizer, and MCP Server",
+  "main": "index.js",
+  "bin": {
+    "github-seo-agent": "./bin/cli.js",
+    "github-seo": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node ./bin/cli.js audit",
+    "audit": "node ./bin/cli.js audit",
+    "mcp": "node ./bin/cli.js mcp",
+    "test": "node -e \"const { GitHubSEOClient } = require('./index.js'); console.log('Client loaded successfully');\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muhdfaisalwork-gif/linkedin-agent.git"
+  },
+  "keywords": [
+    "github",
+    "seo",
+    "github-seo",
+    "open-source",
+    "mcp-server",
+    "claude-desktop",
+    "cursor",
+    "developer-tools",
+    "launch-pack",
+    "readme-generator",
+    "github-packages"
+  ],
+  "author": "muhdfaisalwork-gif",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/muhdfaisalwork-gif/linkedin-agent/issues"
+  },
+  "homepage": "https://github.com/muhdfaisalwork-gif/linkedin-agent/tree/github-seo-agent#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "index.js",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

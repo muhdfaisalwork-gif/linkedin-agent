@@ -1,6 +1,7 @@
 # 🔍 GitHub SEO Agent — Open-Source Repository Discoverability Engine
 
 [![CI](https://github.com/github-seo-agent/github-seo-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/github-seo-agent/github-seo-agent/actions/workflows/ci.yml)
+[![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-%40muhdfaisalwork--gif%2Fgithub--seo--agent-blue?logo=npm&logoColor=white)](https://github.com/muhdfaisalwork-gif/linkedin-agent/pkgs/npm/github-seo-agent)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenRouter](https://img.shields.io/badge/AI-OpenRouter%20Free%20Models-purple.svg)](https://openrouter.ai/)
@@ -34,10 +35,31 @@ python github_seo_agent.py audit
 python github_seo_agent.py audit
 
 # Generate launch copy for a specific channel
-python github_seo_agent.py launch --channel "Hacker News"
+python github_seo_agent.py launch --channel hacker_news
 
 # Generate Community Health files
-python github_seo_agent.py health-check --fix
+python github_seo_agent.py community --apply
+```
+
+## 📦 Run via NPX & GitHub Packages
+
+Install or run directly anywhere without cloning the repository:
+
+```bash
+# Configure registry for the @muhdfaisalwork-gif scope
+npm config set @muhdfaisalwork-gif:registry https://npm.pkg.github.com
+
+# Run repository audit directly with npx
+npx @muhdfaisalwork-gif/github-seo-agent audit
+
+# Generate launch copy
+npx @muhdfaisalwork-gif/github-seo-agent launch --channel hacker_news
+
+# Run MCP server for Claude Desktop / Cursor
+npx @muhdfaisalwork-gif/github-seo-agent mcp
+
+# Start web dashboard
+npx @muhdfaisalwork-gif/github-seo-agent dashboard
 ```
 
 ## 🔌 MCP Integration
@@ -48,8 +70,8 @@ To add the GitHub SEO Agent to your Claude Desktop configuration:
 {
   "mcpServers": {
     "github-seo-agent": {
-      "command": "python",
-      "args": ["-m", "github_seo_agent.mcp"]
+      "command": "npx",
+      "args": ["-y", "@muhdfaisalwork-gif/github-seo-agent", "mcp"]
     }
   }
 }
