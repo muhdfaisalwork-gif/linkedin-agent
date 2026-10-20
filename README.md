@@ -1,7 +1,8 @@
 # 🚀 LinkedIn Nexus Agent — Autonomous Open-Source LinkedIn Studio & Reach Engine
 
 <p align="center">
-  <a href="https://github.com/muhdfaisalwork-gif/linkedin-agent/actions"><img src="https://img.shields.io/badge/Tests-81%2F81%20Passing-brightgreen?logo=github-actions&logoColor=white" alt="Tests"></a>
+  <a href="https://github.com/muhdfaisalwork-gif/linkedin-agent/actions"><img src="https://img.shields.io/badge/Tests-82%2F82%20Passing-brightgreen?logo=github-actions&logoColor=white" alt="Tests"></a>
+  <a href="https://github.com/muhdfaisalwork-gif/linkedin-agent/pkgs/npm/linkedin-agent"><img src="https://img.shields.io/badge/GitHub%20Packages-%40muhdfaisalwork--gif%2Flinkedin--agent-blue?logo=npm&logoColor=white" alt="GitHub Packages"></a>
   <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-Protocol%202024--11--05-blue?logo=anthropic&logoColor=white" alt="MCP Server"></a>
   <a href="https://ollama.com/"><img src="https://img.shields.io/badge/Ollama-100%25%20Offline%20Ready-black?logo=ollama&logoColor=white" alt="Ollama Local"></a>
   <a href="https://openrouter.ai/"><img src="https://img.shields.io/badge/OpenRouter-Free%20Models%20Included-purple" alt="OpenRouter"></a>
@@ -126,6 +127,38 @@ Now you can prompt Claude:
 - *"Draft a high-engagement post on our 420ms order latency using hook formula F7."*
 - *"Scan my LinkedIn feed and recommend 3 trending posts to comment on."*
 - *"Audit my profile headline and about section."*
+
+---
+
+## 📦 Run via NPX & GitHub Packages
+
+You can also run or integrate LinkedIn Nexus Agent as a scoped Node.js package directly from GitHub Packages:
+
+```bash
+# Configure registry for the @muhdfaisalwork-gif scope
+npm config set @muhdfaisalwork-gif:registry https://npm.pkg.github.com
+
+# Launch studio dashboard
+npx @muhdfaisalwork-gif/linkedin-agent start
+
+# Run MCP server for Claude Desktop / Cursor
+npx @muhdfaisalwork-gif/linkedin-agent mcp
+
+# Run repository SEO audit
+npx @muhdfaisalwork-gif/linkedin-agent audit
+```
+
+Claude Desktop configuration via `npx`:
+```json
+{
+  "mcpServers": {
+    "linkedin-agent": {
+      "command": "npx",
+      "args": ["-y", "@muhdfaisalwork-gif/linkedin-agent", "mcp"]
+    }
+  }
+}
+```
 
 ---
 
