@@ -25,5 +25,7 @@ jobs:
           pip install pytest httpx
 
       - name: Run Test Suite
+        env:
+          OPENROUTER_API_KEY: "sk-or-v1-ci-test-key"
         run: |
           python -m pytest --ignore=tests/test_e2e.py -v

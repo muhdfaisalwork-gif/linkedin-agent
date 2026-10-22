@@ -3,6 +3,9 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
+# Ensure test dummy key exists so unit tests with mock LLMs pass even without .env
+os.environ.setdefault("OPENROUTER_API_KEY", "sk-or-v1-ci-test-key")
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.seo.github_seo import LinkedInNexusGitHubSEO, TARGET_KEYWORDS, RECOMMENDED_GITHUB_TOPICS
