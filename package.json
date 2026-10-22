@@ -1,6 +1,6 @@
 {
   "name": "@muhdfaisalwork-gif/github-seo-agent",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Open-Source GitHub Repository Discoverability Engine, Launch Copy Synthesizer, and MCP Server",
   "main": "index.js",
   "bin": {
