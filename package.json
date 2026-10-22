@@ -1,11 +1,11 @@
 {
   "name": "@muhdfaisalwork-gif/github-seo-agent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open-Source GitHub Repository Discoverability Engine, Launch Copy Synthesizer, and MCP Server",
   "main": "index.js",
   "bin": {
-    "github-seo-agent": "./bin/cli.js",
-    "github-seo": "./bin/cli.js"
+    "github-seo-agent": "bin/cli.js",
+    "github-seo": "bin/cli.js"
   },
   "scripts": {
     "start": "node ./bin/cli.js audit",
@@ -42,6 +42,13 @@
   "files": [
     "index.js",
     "bin",
+    "api",
+    "core",
+    "static",
+    "github_seo_agent.py",
+    "run.py",
+    "run_mcp.py",
+    "requirements.txt",
     "README.md",
     "LICENSE"
   ],
