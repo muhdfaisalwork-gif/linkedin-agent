@@ -39,6 +39,7 @@ class InboxHandler:
                 for m in conversation_history if isinstance(m, dict)
             ])
 
+        history_block = f"Prior Chat History:\n{history_str}" if history_str else ""
         system_prompt = RulesEngine.get_system_prompt(custom_voice=voice.get("tone", ""))
 
         prompt = f"""You are handling incoming LinkedIn Direct Messages for a technical founder & software builder.
@@ -46,7 +47,7 @@ class InboxHandler:
 INBOUND MESSAGE:
 From: {sender_name} ({sender_title})
 Message: "{message_text}"
-{f"Prior Chat History:\n{history_str}" if history_str else ""}
+{history_block}
 
 USER'S REAL VENTURES & SERVICES (RAULF INTERNATIONAL LLC):
 {services_summary}
