@@ -1,11 +1,11 @@
 {
   "name": "@muhdfaisalwork-gif/linkedin-agent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Autonomous Open-Source LinkedIn Studio & Reach Engine with 82-Rule Humanizer, Cognitive Brain, and Claude/Cursor MCP Server",
   "main": "index.js",
   "bin": {
-    "linkedin-agent": "./bin/cli.js",
-    "linkedin-nexus": "./bin/cli.js"
+    "linkedin-agent": "bin/cli.js",
+    "linkedin-nexus": "bin/cli.js"
   },
   "scripts": {
     "start": "node ./bin/cli.js start",
@@ -40,6 +40,13 @@
   "files": [
     "index.js",
     "bin",
+    "api",
+    "core",
+    "scripts",
+    "static",
+    "run.py",
+    "run_mcp.py",
+    "requirements.txt",
     "README.md",
     "LICENSE"
   ],

@@ -36,13 +36,16 @@ function printHelp() {
 Package: @muhdfaisalwork-gif/linkedin-agent
 
 Usage:
-  npx @muhdfaisalwork-gif/linkedin-agent [command]
-  linkedin-agent [command]
+  npx @muhdfaisalwork-gif/linkedin-agent [command] [options]
+  linkedin-agent [command] [options]
 
 Commands:
   start          Start the autonomous studio dashboard (http://localhost:8000)
   mcp            Run the Claude Desktop / Cursor MCP stdio server
-  audit          Run the GitHub SEO audit on the repository
+  audit          Run the GitHub SEO repository audit
+  readme         Generate or apply search-optimized README
+  launch         Generate viral multi-channel launch copy
+  community      Generate GitHub Community Health standards files
   help           Show this help message
 
 Options:
@@ -52,6 +55,8 @@ Options:
 Examples:
   npx @muhdfaisalwork-gif/linkedin-agent start
   npx @muhdfaisalwork-gif/linkedin-agent mcp
+  npx @muhdfaisalwork-gif/linkedin-agent audit
+  npx @muhdfaisalwork-gif/linkedin-agent launch --channel hacker_news
 `);
 }
 
@@ -107,23 +112,25 @@ async function main() {
     return;
   }
 
-  if (command === "audit") {
-    const { LinkedInNexusClient } = require("../index.js");
-    const client = new LinkedInNexusClient();
-    try {
-      console.log("🔍 Fetching GitHub SEO Audit...");
-      const audit = await client.getSeoAudit();
-      console.log(`Score: ${audit.score}/100 (Grade: ${audit.grade})`);
-      if (audit.checklist) {
-        audit.checklist.forEach(item => {
-          console.log(`  ✓ ${typeof item === "string" ? item : item.item}`);
-        });
-      }
-    } catch (e) {
-      console.log(`Studio server not running on localhost:8000 (${e.message}).`);
-      console.log("Tip: Start the studio with 'linkedin-agent start' first.");
+  if (["audit", "readme", "launch", "community"].includes(command)) {
+    const seoScript = path.join(projectRoot, "scripts", "github_seo.py");
+    if (fs.existsSync(seoScript)) {
+      const child = spawn(pythonBin, [seoScript, ...args], {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        env: process.env
+      });
+
+      child.on("error", (err) => {
+        console.error(`Failed to run SEO tool (${pythonBin}): ${err.message}`);
+        process.exit(1);
+      });
+
+      child.on("exit", (code) => {
+        process.exit(code || 0);
+      });
+      return;
     }
-    return;
   }
 
   console.log(`Unknown command: ${command}`);
