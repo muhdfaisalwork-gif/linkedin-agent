@@ -333,7 +333,7 @@ LinkedIn Nexus Agent is a completely free, open-source local studio with:
 - Native MCP Server: Includes a certified Model Context Protocol (2024-11-05) stdio server so you can drive the entire studio inside Claude Desktop or Cursor.
 - Instant Authentication: Connects via direct `li_at` cookie injection in < 1 second.
 
-The stack is Python 3.10+, FastAPI, Playwright, SQLite, and Pillow for quote-card typography. 61/61 automated tests passing.
+The stack is Python 3.10+, FastAPI, Playwright, SQLite, and Pillow for quote-card typography. 82/82 automated tests passing.
 
 Repository: {repo_url}
 MIT licensed. Would love your feedback and thoughts on the architecture!"""
@@ -418,7 +418,7 @@ We are thrilled to release **LinkedIn Nexus Agent v1.0.0**, the complete autonom
 - **Universal Multi-Model Routing**: Native support for Local Ollama, Anthropic Claude, OpenAI, Google Gemini, and OpenRouter free models.
 - **Model Context Protocol (MCP) Server**: Full stdio integration for Claude Desktop, Cursor, and ChatGPT.
 - **1-Second Cookie Connection**: Instant direct session injection with `li_at` cookie verification.
-- **Complete Test Suite**: 61/61 unit and integration tests passing.
+- **Complete Test Suite**: 82/82 unit and integration tests passing.
 
 ### 🚀 Getting Started:
 ```bash
